@@ -6,6 +6,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Hex
+          command: mix local.hex --force
+      - run:
           name: Run deps.get
           command: mix deps.get
       - run:
