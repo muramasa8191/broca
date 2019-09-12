@@ -1,0 +1,17 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: elixir:1.9.1
+    steps:
+      - checkout
+      - run:
+          name: Run deps.get
+          command: mix deps.get
+      - run:
+          name: Run deps.compile
+          command: mix deps.compile
+      - run:
+          name: Run test
+          command: mix test
+
