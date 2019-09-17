@@ -22,7 +22,7 @@ defmodule Broca.MixProject do
   defp deps do
     [
       {:flow, "~> 0.14.3"}
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+            # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 end

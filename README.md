@@ -4,13 +4,13 @@
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `broca` to your list of dependencies in `mix.exs`:
+Broca is not available in Hex, the package can be installed
+by adding `broca` with git to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:broca, "~> 0.1.0"}
+    {:broca, git: "https://github.com/muramasa8191/broca.git"}
   ]
 end
 ```

@@ -15,6 +15,9 @@ jobs:
           name: Run deps.compile
           command: mix deps.compile
       - run:
+          name: Run mix compile
+          command: mix compile
+      - run:
           name: Run test
           command: mix test
 
