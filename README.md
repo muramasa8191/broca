@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/muramasa8191/broca.svg?style=svg)](https://circleci.com/gh/muramasa8191/broca)
 # Broca
 
 **TODO: Add description**
