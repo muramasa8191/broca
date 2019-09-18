@@ -8,17 +8,14 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Check format
+          command: mix format --check-formatted
+      - run:
           name: Install Hex
           command: mix local.hex --force
       - run:
           name: Run deps.get
           command: mix deps.get
-      - run:
-          name: Run deps.compile
-          command: mix deps.compile
-      - run:
-          name: Check format
-          command: mix format --check-formatted
       - run:
           name: Run mix compile
           command: mix compile
