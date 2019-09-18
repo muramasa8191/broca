@@ -3,5 +3,4 @@ defmodule LayerTest do
 
   doctest Layer.Broca.Layers.Affine
   doctest Layer.Broca.Layers.MultLayer
-
 end

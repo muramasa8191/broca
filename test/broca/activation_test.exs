@@ -1,7 +1,6 @@
 defmodule ActivationTest do
   use ExUnit.Case
 
-  doctest ActivationInterface.Broca.Activations.ReLU
-  doctest ActivationInterface.Broca.Activations.Sigmoid
-  
+  doctest Layer.Broca.Activations.ReLU
+  doctest Layer.Broca.Activations.Sigmoid
 end
