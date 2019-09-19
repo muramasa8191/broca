@@ -3,4 +3,5 @@ defmodule ActivationTest do
 
   doctest Layer.Broca.Activations.ReLU
   doctest Layer.Broca.Activations.Sigmoid
+  doctest Layer.Broca.Activations.Softmax
 end

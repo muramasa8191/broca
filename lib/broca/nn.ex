@@ -97,18 +97,47 @@ defmodule Broca.NN do
       iex> Broca.NN.mult(10, 20)
       200
   """
-  def mult(list1, list2) when is_list(hd(list1)) do
+  def mult(list1, list2) when is_list(hd(list1)) and is_list(hd(list2)) do
     Enum.zip(list1, list2)
     |> Enum.map(fn {xs, ys} -> mult(xs, ys) end)
   end
 
-  def mult(list1, list2) when is_list(list1) do
+  def mult(list1, list2) when is_list(list1) and is_list(list2) do
     Enum.zip(list1, list2)
     |> Enum.map(fn {x, y} -> x * y end)
   end
 
+  def mult(list, y) when is_list(hd(list)) do
+    list
+    |> Enum.map(&mult(&1, y))
+  end
+
+  def mult(list, y) when is_list(list) do
+    list
+    |> Enum.map(&(&1 * y))
+  end
+
   def mult(x, y) do
     x * y
+  end
+
+  @doc """
+  Division x divided by y.
+
+  ## Examples
+      iex> Broca.NN.division([1, 2, 3], 2)
+      [0.5, 1.0, 1.5]
+
+      iex> Broca.NN.division([[1, 2, 3], [1, 2, 3]], 2)
+      [[0.5, 1.0, 1.5], [0.5, 1.0, 1.5]]
+  """
+  def division(list, y) when is_list(list) do
+    list
+    |> Enum.map(&division(&1, y))
+  end
+
+  def division(x, y) do
+    x / y
   end
 
   @doc """

@@ -19,14 +19,18 @@ defmodule Broca.Activations.ReLU do
 
     ## Examples
         iex> Layer.backward(%Broca.Activations.ReLU{mask: [True, False, False, True]}, [100.0, 20.0, 30.0, 24.0])
-        {%Broca.Activations.ReLU{mask: [True, False, False, True]}, [0.0, 20.0, 30.0, 0.0]}
+        {%Broca.Activations.ReLU{mask: nil}, [0.0, 20.0, 30.0, 0.0]}
     """
     def backward(layer, dout) do
       res =
         Enum.zip(layer.mask, dout)
         |> Enum.map(fn {mask, dout} -> if mask == True, do: 0.0, else: dout end)
 
-      {layer, res}
+      {%Broca.Activations.ReLU{}, res}
+    end
+
+    def update(layer, _) do
+      layer
     end
   end
 end
@@ -60,6 +64,46 @@ defmodule Broca.Activations.Sigmoid do
     def backward(layer, dout) do
       res = dout |> Broca.NN.mult(Broca.NN.subtract(1.0, layer.out)) |> Broca.NN.mult(layer.out)
       {layer, res}
+    end
+
+    def update(layer, _) do
+      layer
+    end
+  end
+end
+
+defmodule Broca.Activations.Softmax do
+  defstruct y: []
+
+  defimpl Layer, for: Broca.Activations.Softmax do
+    @doc """
+    Forward for Softmax
+
+    ## Examples
+        iex> Layer.forward(%Broca.Activations.Softmax{}, [0.3, 2.9, 4.0])
+        {%Broca.Activations.Softmax{y: [0.01821127329554753, 0.24519181293507392, 0.7365969137693786]},
+         [0.01821127329554753, 0.24519181293507392, 0.7365969137693786]}
+    """
+    def forward(_, x) do
+      out = Broca.NN.softmax(x)
+      {%Broca.Activations.Softmax{y: out}, out}
+    end
+
+    @doc """
+    Backward for Softmax
+
+    ## Examples
+        iex> Layer.backward(%Broca.Activations.Softmax{y: [[0.1, 0.5, 0.4], [0.2, 0.2, 0.6]]}, [[0, 1, 0],[0, 0, 1]])
+        {%Broca.Activations.Softmax{}, [[0.05, -0.25, 0.2], [0.1, 0.1, -0.2]]}
+    """
+    def backward(layer, dout) do
+      batch_size = length(dout)
+      res = Broca.NN.subtract(layer.y, dout) |> Broca.NN.division(batch_size)
+      {%Broca.Activations.Softmax{}, res}
+    end
+
+    def update(layer, _) do
+      layer
     end
   end
 end
