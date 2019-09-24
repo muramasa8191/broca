@@ -16,4 +16,6 @@ defmodule BrocaTest do
 
   doctest Broca.Optimizers.AdaGrad
   doctest Optimizer.Broca.Optimizers.AdaGrad
+
+  doctest Broca.NumericalGradient
 end

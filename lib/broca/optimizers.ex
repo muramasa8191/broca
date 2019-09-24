@@ -12,8 +12,8 @@ defmodule Broca.Optimizers.AdaGrad do
     Constructor.
 
     ## Examples
-      iex> Optimizer.init(%Broca.Optimizers.AdaGrad{}, [%Broca.Layers.Affine{dw: [[1, 2], [3, 4]], db: [5, 6]}, \
-          %Broca.Activations.ReLU{}, %Broca.Layers.Affine{dw: [[1, 2, 3], [4, 5, 6]], db: [8, 9, 10]}, \
+      iex> Optimizer.init(%Broca.Optimizers.AdaGrad{}, [%Broca.Layers.Affine{grads: [weight: [[1, 2], [3, 4]], bias: [5, 6]]}, \
+          %Broca.Activations.ReLU{}, %Broca.Layers.Affine{grads: [weight: [[1, 2, 3], [4, 5, 6]], bias: [8, 9, 10]]}, \
           %Broca.Activations.Softmax{}])
       %Broca.Optimizers.AdaGrad{h: [[[[0.0, 0.0], [0.0, 0.0]], [0.0, 0.0]], [], [[[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], [0.0, 0.0, 0.0]], []], init: True}
     """

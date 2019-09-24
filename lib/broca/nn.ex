@@ -194,9 +194,9 @@ defmodule Broca.NN do
   @spec dot([[number]], [number]) :: [number]
   @spec dot([number], [[number]]) :: [number]
   @spec dot([number], [number]) :: number
-  def dot(as, bs) when is_list(hd(as)) or is_list(hd(bs)) do
-    as = if not is_list(hd as), do: [as], else: as
-    bs = if not is_list(hd bs), do: [bs], else: bs
+  def dot(as, bs) when is_list(hd(as)) and is_list(hd(bs)) do
+    # as = if not is_list(hd as), do: [as], else: as
+    # bs = if not is_list(hd bs), do: [bs], else: bs
     if length(hd as) != length(bs), do: raise("list should be dot([a x m], [m x b]) but dot([#{length(as)} x #{length(hd as)}], [#{length(bs)} x #{length(hd bs)}]")
     bt = transpose(bs)
 
