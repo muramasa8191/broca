@@ -194,7 +194,10 @@ defmodule Broca.NN do
   @spec dot([[number]], [number]) :: [number]
   @spec dot([number], [[number]]) :: [number]
   @spec dot([number], [number]) :: number
-  def dot(as, bs) when is_list(hd(as)) and is_list(hd(bs)) do
+  def dot(as, bs) when is_list(hd(as)) or is_list(hd(bs)) do
+    as = if not is_list(hd as), do: [as], else: as
+    bs = if not is_list(hd bs), do: [bs], else: bs
+    if length(hd as) != length(bs), do: raise("list should be dot([a x m], [m x b]) but dot([#{length(as)} x #{length(hd as)}], [#{length(bs)} x #{length(hd bs)}]")
     bt = transpose(bs)
 
     as
@@ -332,24 +335,24 @@ defmodule Broca.NN do
 
   ## Examples
       iex> Broca.NN.one_hot(0, 4)
-      [1, 0, 0, 0, 0]
+      [1.0, 0.0, 0.0, 0.0, 0.0]
 
       iex> Broca.NN.one_hot(3, 4)
-      [0, 0, 0, 1, 0]
+      [0.0, 0.0, 0.0, 1.0, 0.0]
 
       iex> Broca.NN.one_hot([0, 1, 2, 3, 4], 4)
-      [[1, 0, 0, 0, 0],
-       [0, 1, 0, 0, 0],
-       [0, 0, 1, 0, 0],
-       [0, 0, 0, 1, 0],
-       [0, 0, 0, 0, 1]]
+      [[1.0, 0.0, 0.0, 0.0, 0.0],
+       [0.0, 1.0, 0.0, 0.0, 0.0],
+       [0.0, 0.0, 1.0, 0.0, 0.0],
+       [0.0, 0.0, 0.0, 1.0, 0.0],
+       [0.0, 0.0, 0.0, 0.0, 1.0]]
   """
   def one_hot(list, max) when is_list(list) do
     list |> Enum.map(&one_hot(&1, max))
   end
 
   def one_hot(class, max) do
-    0..max |> Enum.map(&if &1 == class, do: 1, else: 0)
+    0..max |> Enum.map(&if &1 == class, do: 1.0, else: 0.0)
   end
 
   @doc """
@@ -364,18 +367,23 @@ defmodule Broca.NN do
       iex> t = [[0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]
       iex> y = [[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0],[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]]
       iex> Broca.NN.cross_entropy_error(y, t)
-      1.021650914198676
+      0.510825457099338
   """
   def cross_entropy_error(ys, ts) when is_list(hd(ys)) do
     Enum.zip(ys, ts)
     |> Enum.reduce(0, fn {y, t}, acc -> acc + cross_entropy_error(y, t) end)
+    |> Broca.NN.division(length(ys))
   end
 
   def cross_entropy_error(ys, ts) do
     delta = 1.0e-7
+    # IO.inspect(ys)
+    # IO.inspect(ts)
 
     Enum.zip(ys, ts)
     |> Enum.reduce(0, fn {y, t}, acc -> if t == 0, do: acc, else: acc - :math.log(y + delta) end)
+
+    # |> IO.inspect
   end
 
   @doc """
@@ -423,5 +431,78 @@ defmodule Broca.NN do
   def filter_mask(list, filter) do
     list
     |> Enum.map(&if filter.(&1), do: True, else: False)
+  end
+
+  @doc """
+  Mask the data. The `value` is replaced by the `replaced_value` if `filter` is `True`
+
+  ## Examples
+      iex> Broca.NN.mask(True, 4.0)
+      0.0
+
+      iex> Broca.NN.mask(False, 4, 0)
+      4
+
+      iex> Broca.NN.mask([True, False, True], [1, 2, 4], -1.0)
+      [-1.0, 2, -1.0]
+  """
+  def mask(filter, values) do
+    mask(filter, values, 0.0)
+  end
+
+  def mask(filter, values, replace_value) when is_list(filter) do
+    Enum.zip(filter, values)
+    |> Enum.map(fn {f, v} -> mask(f, v, replace_value) end)
+  end
+
+  def mask(filter, _, replace_value) when filter == True do
+    replace_value
+  end
+
+  def mask(_, value, _) do
+    value
+  end
+
+  @doc """
+  Generate zeros with following the structure of `list` given.
+
+  ## Examples
+      iex> Broca.NN.zeros_like([])
+      []
+
+      iex> Broca.NN.zeros_like([[1], []])
+      [[0.0], []]
+
+      iex> Broca.NN.zeros_like([1, 2, 3])
+      [0.0, 0.0, 0.0]
+
+      iex> Broca.NN.zeros_like([[1, 2], [3, 4, 5]])
+      [[0.0, 0.0], [0.0, 0.0, 0.0]]
+  """
+  def zeros_like(list) when is_list(hd list) do
+    list |> Enum.map(&(zeros_like(&1)))
+  end
+  def zeros_like(list) do
+    List.duplicate(0.0, length(list))
+  end
+
+  @doc """
+  Get the list of lengthes
+
+  ## Examples
+      iex> Broca.NN.shape([1, 2, 3])
+      [3]
+
+      iex> Broca.NN.shape([[1, 2], [3, 4], [5, 6]])
+      [3, 2]
+  """
+  def shape(list) do
+    shape(list, [])
+  end
+  def shape(list, res) when is_list(list) do
+    shape(hd(list), [length(list)]++res)
+  end
+  def shape(_, res) do
+    Enum.reverse res
   end
 end
