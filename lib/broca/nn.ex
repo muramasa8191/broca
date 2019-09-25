@@ -197,7 +197,14 @@ defmodule Broca.NN do
   def dot(as, bs) when is_list(hd(as)) and is_list(hd(bs)) do
     # as = if not is_list(hd as), do: [as], else: as
     # bs = if not is_list(hd bs), do: [bs], else: bs
-    if length(hd as) != length(bs), do: raise("list should be dot([a x m], [m x b]) but dot([#{length(as)} x #{length(hd as)}], [#{length(bs)} x #{length(hd bs)}]")
+    if length(hd(as)) != length(bs),
+      do:
+        raise(
+          "list should be dot([a x m], [m x b]) but dot([#{length(as)} x #{length(hd(as))}], [#{
+            length(bs)
+          } x #{length(hd(bs))}]"
+        )
+
     bt = transpose(bs)
 
     as
@@ -479,9 +486,10 @@ defmodule Broca.NN do
       iex> Broca.NN.zeros_like([[1, 2], [3, 4, 5]])
       [[0.0, 0.0], [0.0, 0.0, 0.0]]
   """
-  def zeros_like(list) when is_list(hd list) do
-    list |> Enum.map(&(zeros_like(&1)))
+  def zeros_like(list) when is_list(hd(list)) do
+    list |> Enum.map(&zeros_like(&1))
   end
+
   def zeros_like(list) do
     List.duplicate(0.0, length(list))
   end
@@ -499,10 +507,12 @@ defmodule Broca.NN do
   def shape(list) do
     shape(list, [])
   end
+
   def shape(list, res) when is_list(list) do
-    shape(hd(list), [length(list)]++res)
+    shape(hd(list), [length(list)] ++ res)
   end
+
   def shape(_, res) do
-    Enum.reverse res
+    Enum.reverse(res)
   end
 end

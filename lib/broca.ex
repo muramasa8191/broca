@@ -5,7 +5,7 @@ defmodule Broca do
   def ch05(epochs, batch_size, learning_rate \\ 0.1) do
     {x_train, t_train} = Broca.Dataset.MNIST.load_train_data()
     {x_test, t_test} = Broca.Dataset.MNIST.load_test_data()
-    {model, loss_layer} = Broca.Models.TwoLayerNet2.new(784, 50, 10)
+    {model, loss_layer} = Broca.Models.TwoLayerNet.new(784, 50, 10)
     data_size = length(x_train)
     IO.puts("Train on #{data_size} samples.")
     zip_data = Enum.zip(x_train, t_train)
@@ -30,6 +30,7 @@ defmodule Broca do
             |> Enum.shuffle()
             |> Enum.take(batch_size)
             |> Enum.unzip()
+
           # IO.puts("x_batch size")
           # IO.inspect(Broca.NN.shape(x_batch))
           # [a1, _, a2, _] = loop_model
@@ -43,7 +44,8 @@ defmodule Broca do
           # IO.inspect(a2.bias |> Enum.take(10))
 
           grad_model =
-            Broca.Models.TwoLayerNet2.gradient(loop_model, loss_layer, x_batch, t_batch)
+            Broca.Models.TwoLayerNet.numerical_gradient(loop_model, loss_layer, x_batch, t_batch)
+
           # [a1, _, a2, _] = grad_model
           # IO.puts("grad_w1:")
           # IO.inspect(hd a1.dw |> Enum.take(10))
@@ -56,7 +58,7 @@ defmodule Broca do
           # IO.puts("delete")
 
           {updated_model, updated_optimizer} =
-            Broca.Models.TwoLayerNet2.update(grad_model, loop_optimizer, learning_rate)
+            Broca.Models.TwoLayerNet.update(grad_model, loop_optimizer, learning_rate)
 
           # [a1, _, a2, _] = updated_model
           # IO.puts("new_w1:")
@@ -72,9 +74,8 @@ defmodule Broca do
           # [a1, _, a2, _] = updated_model
           # a1.weight |> Broca.NN.shape |> Enum.map(&(IO.puts("#{&1}, ")))
           # a2.weight |> Broca.NN.shape |> Enum.map(&(IO.puts("#{&1}, ")))
-          acc = Broca.Models.TwoLayerNet2.accuracy(updated_model, x_batch, t_batch)
           # IO.puts("loss")
-          loss = Broca.Models.TwoLayerNet2.loss(updated_model, loss_layer, x_batch, t_batch)
+          loss = Broca.Models.TwoLayerNet.loss(updated_model, loss_layer, x_batch, t_batch)
 
           progress = round(i / iterate * 10)
 
@@ -84,11 +85,12 @@ defmodule Broca do
                 if progress != 0, do: List.to_string(for _ <- 1..(progress * 2), do: "=")
               }#{List.to_string(for _ <- 1..((10 - progress) * 2), do: " ")}] - loss: #{
                 Float.floor(loss, 5)
-              } - acc: #{Float.floor(acc, 5)}          "
+              }          "
             )
           else
-            test_acc = Broca.Models.TwoLayerNet2.accuracy(updated_model, x_test, t_test)
-            test_loss = Broca.Models.TwoLayerNet2.loss(updated_model, loss_layer, x_test, t_test)
+            acc = Broca.Models.TwoLayerNet.accuracy(updated_model, x_batch, t_batch)
+            test_acc = Broca.Models.TwoLayerNet.accuracy(updated_model, x_test, t_test)
+            test_loss = Broca.Models.TwoLayerNet.loss(updated_model, loss_layer, x_test, t_test)
 
             IO.puts(
               "\e[1A#{i}/#{iterate} [#{
@@ -135,6 +137,7 @@ defmodule Broca do
         1..iterate
         |> Enum.reduce({e_model, e_optimizer}, fn i, {loop_model, loop_optimizer} ->
           if i == 1, do: IO.puts("0/#{iterate} [                    ]")
+
           shuffle_zip_data =
             zip_data
             |> Enum.shuffle()
@@ -143,6 +146,7 @@ defmodule Broca do
           {x_batch, t_batch} =
             shuffle_zip_data
             |> Enum.unzip()
+
           # IO.puts("x_batch size")
           # IO.inspect(Broca.NN.shape(x_batch))
           # [a1, _, a2, _] = loop_model
@@ -159,13 +163,15 @@ defmodule Broca do
             shuffle_zip_data
             |> Flow.from_enumerable(max_demand: 4)
             |> Flow.map(fn {x, t} -> batch_train(loop_model, loss_layer, x, t) end)
-            |> Enum.to_list
+            |> Enum.to_list()
             # |> IO.inspect
-            |> Enum.reduce(loop_model, 
+            |> Enum.reduce(
+              loop_model,
               fn result_model, mod ->
                 Enum.zip(mod, result_model)
                 |> Enum.map(fn {m, r} -> Layer.batch_update(m, r) end)
-              end)
+              end
+            )
 
           # [a1, _, a2, _] = grad_model
           # IO.puts("grad_w1:")

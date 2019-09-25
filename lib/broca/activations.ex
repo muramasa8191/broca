@@ -51,6 +51,10 @@ defmodule Broca.Activations.ReLU do
     def get_grads(_) do
       []
     end
+
+    def gradient_forward(layer, x, _, _, _, _, _) do
+      forward(layer, x)
+    end
   end
 end
 
@@ -95,6 +99,10 @@ defmodule Broca.Activations.Sigmoid do
 
     def get_grads(_) do
       []
+    end
+
+    def gradient_forward(layer, x, _, _, _, _, _) do
+      forward(layer, x)
     end
   end
 end
@@ -146,6 +154,10 @@ defmodule Broca.Activations.Softmax do
 
     def get_grads(_) do
       []
+    end
+
+    def gradient_forward(layer, x, _, _, _, _, _) do
+      forward(layer, x)
     end
   end
 end

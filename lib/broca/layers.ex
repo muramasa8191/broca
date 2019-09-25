@@ -4,6 +4,7 @@ defprotocol Layer do
   def update(layer, optimize_func)
   def batch_update(layer1, layer2)
   def get_grads(layer)
+  def gradient_forward(layer, x, name, idx1, idx2, idx3, diff)
 end
 
 defmodule Broca.Layers.MultLayer do
@@ -26,6 +27,10 @@ defmodule Broca.Layers.MultLayer do
     """
     def forward(_, [x, y]) do
       {Broca.Layers.MultLayer.new(x, y), Broca.NN.mult(x, y)}
+    end
+
+    def gradient_forward(layer, x, _, _, _, _, _) do
+      forward(layer, x)
     end
 
     @doc """
@@ -60,7 +65,7 @@ defmodule Broca.Layers.Affine do
   @moduledoc """
   Fully connected layer
   """
-  defstruct params: [weight: [], bias: []], x: [], grads: nil
+  defstruct name: "affine", params: [weight: [], bias: []], x: [], grads: nil
 
   @doc """
   Constructor
@@ -69,21 +74,34 @@ defmodule Broca.Layers.Affine do
       iex> Broca.Layers.Affine([0.1, 0.2], [0.3, 0.4])
       %Broca.Layers.Affine{weight: [0.1, 0.2], bias: [0.3, 0.4]}
   """
-  def new(w, b) do
-    %Broca.Layers.Affine{params: [weight: w, bias: b]}
+  def new(name, w, b) do
+    %Broca.Layers.Affine{name: name, params: [weight: w, bias: b]}
   end
 
   defimpl Layer, for: Broca.Layers.Affine do
     @doc """
 
     ## Examples
-        iex> layer = Broca.Layers.Affine.new([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], [0.9, 0.6, 0.3])
+        iex> layer = Broca.Layers.Affine.new("a1", [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], [0.9, 0.6, 0.3])
         iex> Layer.forward(layer, [-0.12690894,  0.31470161])
-        {%Broca.Layers.Affine{params: [weight: [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], bias: [0.9, 0.6, 0.3]], x: [-0.12690894,  0.31470161]}, [1.01318975, 0.7319690169999999, 0.450748284]}
+        {%Broca.Layers.Affine{name: "a1", params: [weight: [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], bias: [0.9, 0.6, 0.3]], x: [-0.12690894,  0.31470161]}, [1.01318975, 0.7319690169999999, 0.450748284]}
     """
     def forward(layer, x) do
       # IO.puts("Affine forward [#{length(x)} x #{if is_list(hd x), do: length(hd x), else: 1}]")
       out = Broca.NN.dot(x, layer.params[:weight]) |> Broca.NN.add(layer.params[:bias])
+      {%Broca.Layers.Affine{layer | x: x}, out}
+    end
+
+    def gradient_forward(layer, x, name, idx1, idx2, idx3, diff) do
+      out =
+        if name == layer.name do
+          Broca.NumericalGradient.dot2(x, layer.params[:weight], idx1, idx2, diff)
+          |> Broca.NumericalGradient.add2(layer.params[:bias], idx3, diff)
+        else
+          {_, res} = forward(layer, x)
+          res
+        end
+
       {%Broca.Layers.Affine{layer | x: x}, out}
     end
 
@@ -110,7 +128,7 @@ defmodule Broca.Layers.Affine do
       dx = Broca.NN.dot(dout, Broca.NN.transpose(layer.params[:weight]))
       dw = Broca.NN.transpose(layer.x) |> Broca.NN.dot(dout)
       # Broca.NN.shape(dw) |> Enum.map(&(IO.puts("#{&1}, ")))
-      db = if is_list(hd dout), do: Broca.NN.sum(dout, :col), else: dout
+      db = if is_list(hd(dout)), do: Broca.NN.sum(dout, :col), else: dout
       {%Broca.Layers.Affine{layer | grads: [weight: dw, bias: db]}, dx}
     end
 
@@ -123,7 +141,10 @@ defmodule Broca.Layers.Affine do
       # Broca.NN.shape(layer.dw) |> Enum.map(&(IO.puts("#{&1}, ")))
       updated_params =
         Keyword.keys(layer.params)
-        |> Enum.reduce([], fn key, list -> Keyword.put_new(list, key, optimize_func.(layer.params[key], layer.grads[key])) end)
+        |> Enum.reduce([], fn key, list ->
+          Keyword.put_new(list, key, optimize_func.(layer.params[key], layer.grads[key]))
+        end)
+
       # IO.inspect(layer.params)
       # IO.inspect(layer.grads)
       # IO.inspect(updated_params)
@@ -134,8 +155,9 @@ defmodule Broca.Layers.Affine do
       %Broca.Layers.Affine{
         params: layer2.params,
         grads: layer2.grads
-        }
+      }
     end
+
     def batch_update(layer1, layer2) do
       dw = Broca.NN.add(layer1.grads[:weight], layer2.grads[:weight])
       db = Broca.NN.add(layer1.grads[:bias], layer2.grads[:bias])
@@ -148,7 +170,7 @@ defmodule Broca.Layers.Affine do
       %Broca.Layers.Affine{
         params: [weight: layer1.params[:weight], bias: layer1.params[:bias]],
         grads: [weight: dw, bias: db]
-        }
+      }
     end
 
     def get_grads(layer) do
