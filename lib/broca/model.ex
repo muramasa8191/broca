@@ -98,13 +98,10 @@ defmodule Broca.Models do
 
       {a1grads, a2grads} =
         1..4
-        |> Enum.to_list()
         |> Flow.from_enumerable(max_demand: 1, stages: 4)
         |> Flow.map(
           &case &1 do
             1 ->
-              IO.puts("dw1 start")
-
               {:dw1,
                Broca.NumericalGradient.numerical_gradient(
                  fn idx1, idx2, diff -> base_func.("a1", idx1, idx2, -1, diff) end,
@@ -113,8 +110,6 @@ defmodule Broca.Models do
                )}
 
             2 ->
-              IO.puts("db1 start")
-
               {:db1,
                Broca.NumericalGradient.numerical_gradient(
                  fn idx, diff -> base_func.("a1", -1, -1, idx, diff) end,
@@ -123,8 +118,6 @@ defmodule Broca.Models do
                )}
 
             3 ->
-              IO.puts("dw2 start")
-
               {:dw2,
                Broca.NumericalGradient.numerical_gradient(
                  fn idx1, idx2, diff -> base_func.("a2", idx1, idx2, -1, diff) end,
@@ -133,8 +126,6 @@ defmodule Broca.Models do
                )}
 
             4 ->
-              IO.puts("db2 start")
-
               {:db2,
                Broca.NumericalGradient.numerical_gradient(
                  fn idx, diff -> base_func.("a2", -1, -1, idx, diff) end,
@@ -145,14 +136,21 @@ defmodule Broca.Models do
         )
         |> Enum.reduce({[], []}, fn {key, list}, {a1grads, a2grads} ->
           case key do
-            :dw1 -> Keyword.put_new(a1grads, key, list)
-            :db1 -> Keyword.put_new(a1grads, key, list)
-            :dw2 -> Keyword.put_new(a2grads, key, list)
-            :db2 -> Keyword.put_new(a2grads, key, list)
+            :dw1 -> 
+              a1grads = Keyword.put_new(a1grads, :weight, list)
+              {a1grads, a2grads}
+            :db1 -> 
+              a1grads = Keyword.put_new(a1grads, :bias, list)
+              {a1grads, a2grads}
+            :dw2 -> 
+              a2grads = Keyword.put_new(a2grads, :weight, list)
+              {a1grads, a2grads}
+            :db2 -> 
+              a2grads = Keyword.put_new(a2grads, :bias, list)
+              {a1grads, a2grads}
           end
         end)
 
-      IO.puts("numerical_gradient done")
       [%Broca.Layers.Affine{a1 | grads: a1grads}, r, %Broca.Layers.Affine{a2 | grads: a2grads}, s]
     end
 
