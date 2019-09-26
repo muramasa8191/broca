@@ -5,9 +5,9 @@ defmodule Broca do
   def ch05(epochs, batch_size, learning_rate \\ 0.1) do
     {x_train, t_train} = Broca.Dataset.MNIST.load_train_data()
     {x_test, t_test} = Broca.Dataset.MNIST.load_test_data()
-    {model, loss_layer} = Broca.Models.TwoLayerNet.new(784, 50, 10)
+    {model, loss_layer} = Broca.Models.TwoLayerNet.new(784, 30, 10)
     data_size = length(x_train)
-    IO.puts("Train on #{data_size} samples.")
+    IO.puts("Train on #{data_size} samples, Validation on #{length(x_test)} samples.")
     zip_data = Enum.zip(x_train, t_train)
 
     iterate = round(data_size / batch_size) |> max(1)
@@ -45,6 +45,50 @@ defmodule Broca do
 
           grad_model =
             Broca.Models.TwoLayerNet.numerical_gradient(loop_model, loss_layer, x_batch, t_batch)
+
+          grad_model2 =
+            Broca.Models.TwoLayerNet.gradient(loop_model, loss_layer, x_batch, t_batch)
+
+          [a11, _, a21, _] = grad_model
+          [a12, _, a22, _] = grad_model2
+
+          dw1_diff =
+            Enum.zip(a11.grads[:weight], a12.grads[:weight])
+            |> Enum.map(fn {ws1, ws2} ->
+              Enum.zip(ws1, ws2)
+              |> Enum.map(fn {w1, w2} -> abs(w1 - w2) end)
+              |> Enum.sum()
+            end)
+            |> Enum.sum()
+            |> Kernel./(length(a11.grads[:weight]) * length(hd(a11.grads[:weight])))
+
+          db1_diff =
+            Enum.zip(a11.grads[:bias], a12.grads[:bias])
+            |> Enum.map(fn {w1, w2} -> abs(w1 - w2) end)
+            |> Enum.sum()
+            |> Kernel./(length(a11.grads[:bias]))
+
+          dw2_diff =
+            Enum.zip(a21.grads[:weight], a22.grads[:weight])
+            |> Enum.map(fn {ws1, ws2} ->
+              Enum.zip(ws1, ws2)
+              |> Enum.map(fn {w1, w2} -> abs(w1 - w2) end)
+              |> Enum.sum()
+            end)
+            |> Enum.sum()
+            |> Kernel./(length(a21.grads[:weight]) * length(hd(a21.grads[:weight])))
+
+          db2_diff =
+            Enum.zip(a21.grads[:bias], a22.grads[:bias])
+            |> Enum.map(fn {w1, w2} -> abs(w1 - w2) end)
+            |> Enum.sum()
+            |> Kernel./(length(a21.grads[:bias]))
+
+          IO.puts(
+            "** dw1_diff: #{dw1_diff}, db1_diff: #{
+              db1_diff
+            }, dw2_diff: #{dw2_diff}, db2_diff: #{db2_diff}\n\n"
+          )
 
           # [a1, _, a2, _] = grad_model
           # IO.puts("grad_w1:")

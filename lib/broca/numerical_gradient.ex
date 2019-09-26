@@ -16,10 +16,8 @@ defmodule Broca.NumericalGradient do
       |> Enum.map(fn idx1 ->
         0..(length(hd(list)) - 1)
         |> Enum.map(fn idx2 ->
-          (
-            # IO.puts("#{idx1 + 1}/#{length(list)}, #{idx2 + 1}/#{length(hd(list))}")
-            func.(idx1, idx2, @h) - func.(idx1, idx2, -@h)
-          ) / (2 * @h)
+          # IO.puts("#{idx1 + 1}/#{length(list)}, #{idx2 + 1}/#{length(hd(list))}")
+          (func.(idx1, idx2, @h) - func.(idx1, idx2, -@h)) / (2 * @h)
         end)
       end)
     else

@@ -74,12 +74,14 @@ defmodule Broca.Models do
       sum / length(pred)
     end
 
-    def gradient(model, loss_layer, t) do
-      {new_model, _} =
-        Loss.backward(loss_layer, t)
-        |> Model.backward(model)
+    def gradient(model, loss_layer, x, t) do
+      {forward_model, _} = predict(model, x)
 
-      new_model
+      {backward_model, _} =
+        Loss.backward(loss_layer, t)
+        |> Model.backward(forward_model)
+
+      backward_model
     end
 
     def numerical_gradient(model, loss_layer, x, t) do
@@ -136,16 +138,19 @@ defmodule Broca.Models do
         )
         |> Enum.reduce({[], []}, fn {key, list}, {a1grads, a2grads} ->
           case key do
-            :dw1 -> 
+            :dw1 ->
               a1grads = Keyword.put_new(a1grads, :weight, list)
               {a1grads, a2grads}
-            :db1 -> 
+
+            :db1 ->
               a1grads = Keyword.put_new(a1grads, :bias, list)
               {a1grads, a2grads}
-            :dw2 -> 
+
+            :dw2 ->
               a2grads = Keyword.put_new(a2grads, :weight, list)
               {a1grads, a2grads}
-            :db2 -> 
+
+            :db2 ->
               a2grads = Keyword.put_new(a2grads, :bias, list)
               {a1grads, a2grads}
           end
