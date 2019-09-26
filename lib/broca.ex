@@ -85,9 +85,9 @@ defmodule Broca do
             |> Kernel./(length(a21.grads[:bias]))
 
           IO.puts(
-            "** dw1_diff: #{dw1_diff}, db1_diff: #{
-              db1_diff
-            }, dw2_diff: #{dw2_diff}, db2_diff: #{db2_diff}\n\n"
+            "** dw1_diff: #{dw1_diff}, db1_diff: #{db1_diff}, dw2_diff: #{dw2_diff}, db2_diff: #{
+              db2_diff
+            }\n\n"
           )
 
           # [a1, _, a2, _] = grad_model
