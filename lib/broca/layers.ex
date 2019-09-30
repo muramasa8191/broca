@@ -84,7 +84,7 @@ defmodule Broca.Layers.Affine do
     ## Examples
         iex> layer = Broca.Layers.Affine.new("a1", [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], [0.9, 0.6, 0.3])
         iex> Layer.forward(layer, [-0.12690894,  0.31470161])
-        {%Broca.Layers.Affine{name: "a1", params: [weight: [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], bias: [0.9, 0.6, 0.3]], x: [-0.12690894,  0.31470161]}, [1.01318975, 0.7319690169999999, 0.450748284]}
+        {%Broca.Layers.Affine{name: "a1", params: [weight: [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], bias: [0.9, 0.6, 0.3]], x: [[-0.12690894,  0.31470161]]}, [[1.01318975, 0.7319690169999999, 0.450748284]]}
     """
     def forward(layer, x) do
       # IO.puts("Affine forward [#{length(x)} x #{if is_list(hd x), do: length(hd x), else: 1}]")
