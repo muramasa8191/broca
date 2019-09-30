@@ -39,7 +39,7 @@ defmodule Broca.Dataset do
           fn _, {acc, rest} ->
             <<image::binary-size(image_size), rest::binary>> = rest
 
-            if normalize do
+            if normalize == True do
               {[:erlang.binary_to_list(image) |> Enum.map(&(&1 / 255.0))] ++ acc, rest}
             else
               {[:erlang.binary_to_list(image)] ++ acc, rest}
@@ -56,9 +56,9 @@ defmodule Broca.Dataset do
       # IO.puts("size: #{size}")
       # IO.inspect(bin)
       if is_one_hot do
-        :erlang.binary_to_list(bin) |> Enum.map(&Broca.NN.one_hot(&1, 9))
+        :erlang.binary_to_list(bin) |> Enum.map(&Broca.NN.one_hot(&1, 9)) |> Enum.reverse
       else
-        :erlang.binary_to_list(bin)
+        :erlang.binary_to_list(bin) |> Enum.reverse
       end
     end
   end
