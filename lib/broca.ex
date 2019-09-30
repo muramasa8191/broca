@@ -46,8 +46,7 @@ defmodule Broca do
           # grad_model =
           #   Broca.Models.TwoLayerNet.numerical_gradient(loop_model, loss_layer, x_batch, t_batch)
 
-          grad_model =
-            Broca.Models.TwoLayerNet.gradient(loop_model, loss_layer, x_batch, t_batch)
+          grad_model = Broca.Models.TwoLayerNet.gradient(loop_model, loss_layer, x_batch, t_batch)
 
           # [a11, _, a21, _] = grad_model
           # [a12, _, a22, _] = grad_model2
@@ -248,7 +247,7 @@ defmodule Broca do
           # a2.weight |> Broca.NN.shape |> Enum.map(&(IO.puts("#{&1}, ")))
           # IO.puts("loss")
           loss = Broca.Models.TwoLayerNet2.loss(updated_model, loss_layer, x_batch, t_batch)
-          progress = Float.floor(i / iterate, 1) * 10 |> Kernel.trunc
+          progress = (Float.floor(i / iterate, 1) * 10) |> Kernel.trunc()
 
           if i != iterate do
             IO.puts(

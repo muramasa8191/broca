@@ -56,9 +56,9 @@ defmodule Broca.Dataset do
       # IO.puts("size: #{size}")
       # IO.inspect(bin)
       if is_one_hot do
-        :erlang.binary_to_list(bin) |> Enum.map(&Broca.NN.one_hot(&1, 9)) |> Enum.reverse
+        :erlang.binary_to_list(bin) |> Enum.map(&Broca.NN.one_hot(&1, 9)) |> Enum.reverse()
       else
-        :erlang.binary_to_list(bin) |> Enum.reverse
+        :erlang.binary_to_list(bin) |> Enum.reverse()
       end
     end
   end

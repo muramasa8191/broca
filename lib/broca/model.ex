@@ -42,14 +42,16 @@ defmodule Broca.Models do
       affine1 =
         Broca.Layers.Affine.new(
           "a1",
-          Broca.Random.randn(input_size, hidden_size) |> Broca.NN.mult(:math.sqrt(2.0 / input_size)),
+          Broca.Random.randn(input_size, hidden_size)
+          |> Broca.NN.mult(:math.sqrt(2.0 / input_size)),
           List.duplicate(0.0, hidden_size)
         )
 
       affine2 =
         Broca.Layers.Affine.new(
           "a2",
-          Broca.Random.randn(hidden_size, out_size) |> Broca.NN.mult(:math.sqrt(2.0 / hidden_size)),
+          Broca.Random.randn(hidden_size, out_size)
+          |> Broca.NN.mult(:math.sqrt(2.0 / hidden_size)),
           List.duplicate(0.0, out_size)
         )
 
@@ -180,14 +182,16 @@ defmodule Broca.Models do
       affine1 =
         Broca.Layers.Affine.new(
           "a1",
-          Broca.Random.randn(input_size, hidden_size) |> Broca.NN.mult(:math.sqrt(2.0 / input_size)),
+          Broca.Random.randn(input_size, hidden_size)
+          |> Broca.NN.mult(:math.sqrt(2.0 / input_size)),
           List.duplicate(0.0, hidden_size)
         )
 
       affine2 =
         Broca.Layers.Affine.new(
           "a2",
-          Broca.Random.randn(hidden_size, out_size) |> Broca.NN.mult(:math.sqrt(2.0 / hidden_size)),
+          Broca.Random.randn(hidden_size, out_size)
+          |> Broca.NN.mult(:math.sqrt(2.0 / hidden_size)),
           List.duplicate(0.0, out_size)
         )
 
@@ -225,7 +229,7 @@ defmodule Broca.Models do
 
       {backward_model, _} =
         Loss.backward(loss_layer, t)
-        |> IO.inspect
+        |> IO.inspect()
         |> Model.backward(forward_model)
 
       backward_model

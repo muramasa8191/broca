@@ -206,6 +206,7 @@ defmodule Broca.NN do
         )
 
     bt = transpose(bs)
+
     as
     |> Enum.map(fn a -> Enum.map(bt, fn b -> dot(a, b) end) end)
   end
