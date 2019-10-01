@@ -79,6 +79,7 @@ defmodule Broca.Models do
 
     def gradient(model, loss_layer, x, t) do
       {forward_model, _} = predict(model, x)
+
       {backward_model, _} =
         Loss.backward(loss_layer, t)
         |> Model.backward(forward_model)

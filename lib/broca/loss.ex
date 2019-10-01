@@ -29,7 +29,6 @@ defmodule Broca.Losses.CrossEntropyError do
       [0, 0, 1]
     """
     def backward(_, t) do
-
       t
     end
   end

@@ -1,12 +1,25 @@
 defmodule Broca.Trainer do
-
-  def train(model, loss_layer, optimizer, {x_train, t_train}, epochs, batch_size, learning_rate, parallelize \\ False, test_data \\ nil) do
+  def train(
+        model,
+        loss_layer,
+        optimizer,
+        {x_train, t_train},
+        epochs,
+        batch_size,
+        learning_rate,
+        parallelize \\ False,
+        test_data \\ nil
+      ) do
     data_size = length(x_train)
+
     if not is_nil(test_data) do
-      IO.puts("Train on #{data_size} samples, Validation on #{length(elem(test_data, 0))} samples.")
-    else 
+      IO.puts(
+        "Train on #{data_size} samples, Validation on #{length(elem(test_data, 0))} samples."
+      )
+    else
       IO.puts("Train on #{data_size} samples.")
     end
+
     iterate = round(data_size / batch_size) |> max(1)
 
     1..epochs
@@ -48,6 +61,7 @@ defmodule Broca.Trainer do
             )
           else
             acc = Broca.Models.TwoLayerNet.accuracy(updated_model, x_batch, t_batch)
+
             if is_nil(test_data) do
               IO.puts(
                 "\e[1A#{i}/#{iterate} [#{
@@ -78,15 +92,15 @@ defmodule Broca.Trainer do
 
   def parallel_gradient(model, loss_layer, x_train, t_train) do
     Enum.zip(x_train, t_train)
-      |> Flow.from_enumerable(max_demand: 1, stages: 4)
-      |> Flow.map(fn {x, t} -> Broca.Models.TwoLayerNet.gradient(model, loss_layer, x, t) end)
-      |> Enum.to_list()
-      |> Enum.reduce(
-        model,
-        fn result_model, layers ->
-          Enum.zip(layers, result_model)
-          |> Enum.map(fn {layer, r} -> Layer.batch_update(layer, r) end)
-        end
-      )
+    |> Flow.from_enumerable(max_demand: 1, stages: 4)
+    |> Flow.map(fn {x, t} -> Broca.Models.TwoLayerNet.gradient(model, loss_layer, x, t) end)
+    |> Enum.to_list()
+    |> Enum.reduce(
+      model,
+      fn result_model, layers ->
+        Enum.zip(layers, result_model)
+        |> Enum.map(fn {layer, r} -> Layer.batch_update(layer, r) end)
+      end
+    )
   end
 end

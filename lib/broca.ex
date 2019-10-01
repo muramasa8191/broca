@@ -30,7 +30,6 @@ defmodule Broca do
 
           grad_model = Broca.Models.TwoLayerNet.gradient(loop_model, loss_layer, x_batch, t_batch)
 
-
           {updated_model, updated_optimizer} =
             Broca.Models.TwoLayerNet.update(grad_model, loop_optimizer, learning_rate)
 
