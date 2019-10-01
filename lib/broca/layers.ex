@@ -87,10 +87,7 @@ defmodule Broca.Layers.Affine do
         {%Broca.Layers.Affine{name: "a1", params: [weight: [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], bias: [0.9, 0.6, 0.3]], x: [[-0.12690894,  0.31470161]]}, [[1.01318975, 0.7319690169999999, 0.450748284]]}
     """
     def forward(layer, x) do
-      # IO.puts("Affine forward [#{length(x)} x #{if is_list(hd x), do: length(hd x), else: 1}]")
       x = if is_list(hd(x)), do: x, else: [x]
-      # IO.inspect(x)
-      # IO.inspect(layer.params[:weight])
       out = Broca.NN.dot(x, layer.params[:weight]) |> Broca.NN.add(layer.params[:bias])
       {%Broca.Layers.Affine{layer | x: x}, out}
     end
@@ -122,16 +119,9 @@ defmodule Broca.Layers.Affine do
         bias: [0.84029972, 0.22303644, 0.19933264]]},[[0.8124461715455185, 0.20049965471818834]]}
     """
     def backward(layer, dout) do
-      # IO.puts("Affine Backward")
-      # IO.inspect(dout |> Enum.take(10))
-      # Broca.NN.shape(Broca.NN.transpose(layer.x)) |> Enum.map(&(IO.puts("#{&1}, ")))
-      # IO.puts("")
-      # Broca.NN.shape(dout) |> Enum.map(&(IO.puts("#{&1}, ")))
-      # IO.puts("")
       dout_dot = if is_list(hd(dout)), do: dout, else: [dout]
       dx = Broca.NN.dot(dout_dot, Broca.NN.transpose(layer.params[:weight]))
       dw = Broca.NN.transpose(layer.x) |> Broca.NN.dot(dout_dot)
-      # Broca.NN.shape(dw) |> Enum.map(&(IO.puts("#{&1}, ")))
       db = if is_list(hd(dout)), do: Broca.NN.sum(dout, :col), else: dout
       {%Broca.Layers.Affine{layer | grads: [weight: dw, bias: db]}, dx}
     end
@@ -140,18 +130,12 @@ defmodule Broca.Layers.Affine do
     Implementation of Layer but do nothing.
     """
     def update(layer, optimize_func) do
-      # IO.puts("Affine update")
-      # Broca.NN.shape(layer.weight) |> Enum.map(&(IO.puts("#{&1}, ")))
-      # Broca.NN.shape(layer.dw) |> Enum.map(&(IO.puts("#{&1}, ")))
       updated_params =
         Keyword.keys(layer.params)
         |> Enum.reduce([], fn key, list ->
           Keyword.put_new(list, key, optimize_func.(layer.params[key], layer.grads[key]))
         end)
 
-      # IO.inspect(layer.params)
-      # IO.inspect(layer.grads)
-      # IO.inspect(updated_params)
       %Broca.Layers.Affine{name: layer.name, params: updated_params}
     end
 
@@ -165,12 +149,7 @@ defmodule Broca.Layers.Affine do
     def batch_update(layer1, layer2) do
       dw = Broca.NN.add(layer1.grads[:weight], layer2.grads[:weight])
       db = Broca.NN.add(layer1.grads[:bias], layer2.grads[:bias])
-      # IO.puts("layer1.params")
-      # IO.inspect(layer1.params)
-      # IO.puts("layer1.grads")
-      # IO.inspect(layer1.grads)
-      # IO.puts("layer2.grads")
-      # IO.inspect(layer2.grads)
+
       %Broca.Layers.Affine{
         params: [weight: layer1.params[:weight], bias: layer1.params[:bias]],
         grads: [weight: dw, bias: db]

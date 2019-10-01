@@ -26,16 +26,9 @@ defmodule Broca.Activations.ReLU do
         {%Broca.Activations.ReLU{mask: nil}, [[0.0, 20.0, 30.0, 0.0], [0.0, 20.0, 30.0, 0.0]]}
     """
     def backward(layer, dout) do
-      # IO.puts("ReLU Backward")
-      # IO.inspect(dout |> Enum.take(10))
-      # Broca.NN.shape(dout) |> Enum.map(&(IO.puts("#{&1}, ")))
-
       res =
         Enum.zip(layer.mask, dout)
         |> Enum.map(fn {m, v} -> Broca.NN.mask(m, v, 0.0) end)
-
-      # IO.puts("ReLU backward")
-      # IO.inspect(res)
 
       {%Broca.Activations.ReLU{}, res}
     end
@@ -132,14 +125,8 @@ defmodule Broca.Activations.Softmax do
         {%Broca.Activations.Softmax{}, [[0.05, -0.25, 0.2], [0.1, 0.1, -0.2]]}
     """
     def backward(layer, dout) do
-      # IO.puts("Softmax Backward")
-      # IO.inspect(dout |> Enum.take(10))
-      # Broca.NN.shape(dout) |> Enum.map(&(IO.puts("#{&1}, ")))
-
       batch_size = length(dout)
       res = Broca.NN.subtract(layer.y, dout) |> Broca.NN.division(batch_size)
-      # IO.puts("Softmax backward")
-      # IO.inspect(hd res)
 
       {%Broca.Activations.Softmax{}, res}
     end

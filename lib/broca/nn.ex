@@ -195,8 +195,6 @@ defmodule Broca.NN do
   @spec dot([number], [[number]]) :: [number]
   @spec dot([number], [number]) :: number
   def dot(as, bs) when is_list(hd(as)) and is_list(hd(bs)) do
-    # as = if not is_list(hd as), do: [as], else: as
-    # bs = if not is_list(hd bs), do: [bs], else: bs
     if length(hd(as)) != length(bs),
       do:
         raise(
@@ -384,13 +382,9 @@ defmodule Broca.NN do
 
   def cross_entropy_error(ys, ts) do
     delta = 1.0e-7
-    # IO.inspect(ys)
-    # IO.inspect(ts)
 
     Enum.zip(ys, ts)
     |> Enum.reduce(0, fn {y, t}, acc -> if t == 0, do: acc, else: acc - :math.log(y + delta) end)
-
-    # |> IO.inspect
   end
 
   @doc """

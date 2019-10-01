@@ -104,13 +104,6 @@ defmodule Broca.Optimizers.SGD do
           end)
         )
 
-      # [_, _, layer, _] = updated_model
-      # IO.puts("updated")
-      # IO.puts("layer.params")
-      # IO.inspect(layer.params)
-      # IO.puts("layer.grads")
-      # IO.inspect(layer.grads)
-
       {updated_model, %Broca.Optimizers.SGD{}}
     end
 
