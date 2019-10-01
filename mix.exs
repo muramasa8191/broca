@@ -23,6 +23,7 @@ defmodule Broca.MixProject do
     [
       {:earmark, "~> 1.1", only: :dev},
       {:ex_doc, "~> 0.19", only: :dev},
+      {:benchfella, "~> 0.3.0", only: :dev},
       {:flow, "~> 0.14.3"}
     ]
   end

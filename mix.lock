@@ -1,4 +1,5 @@
 %{
+  "benchfella": {:hex, :benchfella, "0.3.5", "b2122c234117b3f91ed7b43b6e915e19e1ab216971154acd0a80ce0e9b8c05f5", [:mix], [], "hexpm"},
   "certifi": {:hex, :certifi, "2.5.1", "867ce347f7c7d78563450a18a6a28a8090331e77fa02380b4a21962a65d36ee5", [:rebar3], [{:parse_trans, "~>3.3", [hex: :parse_trans, repo: "hexpm", optional: false]}], "hexpm"},
   "download": {:hex, :download, "0.0.4", "e031589ef0503005468962de6fdbc2ac7ddeba4671b3093c619e091f4055e45d", [:mix], [{:httpoison, ">= 0.9.0", [hex: :httpoison, repo: "hexpm", optional: false]}], "hexpm"},
   "earmark": {:hex, :earmark, "1.4.0", "397e750b879df18198afc66505ca87ecf6a96645545585899f6185178433cc09", [:mix], [], "hexpm"},
