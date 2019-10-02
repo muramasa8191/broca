@@ -1,3 +1,9 @@
+defprotocol Train do
+  def gradient(model, loss_layer, x, y)
+  def update(model, optimizer, learning_rate)
+  def loss(model, loss_layer, x, y)
+end
+
 defmodule Broca.Trainer do
   def train(
         model,
@@ -33,8 +39,7 @@ defmodule Broca.Trainer do
 
           {x_batch, t_batch} =
             Enum.zip(x_train, t_train)
-            |> Enum.shuffle()
-            |> Enum.take(batch_size)
+            |> Enum.take_random(batch_size)
             |> Enum.unzip()
 
           grad_model =

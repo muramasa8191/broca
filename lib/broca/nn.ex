@@ -509,4 +509,73 @@ defmodule Broca.NN do
   def shape(_, res) do
     Enum.reverse(res)
   end
+
+  @doc """
+  Add 0.0 `pad_count` times around the `list` given
+
+  ## Examples
+      iex> a = [1..10 |> Enum.to_list |> Enum.map(&(&1 / 1.0))]
+      iex> Broca.NN.pad(a, 1)
+      [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+       [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 0.0],
+       [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+
+      iex> a = [1..10 |> Enum.to_list |> Enum.map(&(&1 / 1.0))]
+      iex> Broca.NN.pad(a, 2)
+      [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+       [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+       [0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 0.0, 0.0],
+       [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+       [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+
+      iex> Broca.NN.pad([[1, 2, 3], [4, 5, 6], [7, 8, 9]], 1)
+      [[0.0, 0.0, 0.0, 0.0, 0.0],[0.0, 1.0, 2.0, 3.0, 0.0],[0.0, 4.0, 5.0, 6.0. 0.0],[0.0, 7.0, 8.0, 9.0, 0.0],[0.0, 0.0, 0.0, 0.0, 0.0]]
+  """
+  def pad(list, pad_count) when is_list(hd list) do
+    list =
+      list
+      |> Enum.map(&(List.duplicate(0.0, pad_count)++(Enum.reverse(List.duplicate(0.0, pad_count)++Enum.reverse(&1)))))
+
+    List.duplicate(List.duplicate(0.0, length(hd list)), pad_count)++(Enum.reverse(
+      List.duplicate(List.duplicate(0.0, length(hd list)), pad_count)++(Enum.reverse(list))
+    ))
+  end
+
+  @doc """
+  Create filtered list
+
+  ## Examples
+      iex> list = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]
+      iex>  Broca.NN.im2col(list, 3, 3)
+      [[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
+       [[6, 7, 8, 11, 12, 13, 16, 17, 18], [7, 8, 9, 12, 13, 14, 17, 18, 19], [8, 9, 10, 13, 14, 15, 18, 19, 20]],
+       [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]
+
+      iex> list = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]
+      iex>  Broca.NN.im2col(list, 3, 3, 2)
+      [[[1, 2, 3, 6, 7, 8, 11, 12, 13], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
+       [[11, 12, 13, 16, 17, 18, 21, 22, 23], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]
+
+      iex> list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+      iex>  Broca.NN.im2col(list, 3, 3, 1, 2)
+      [[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]],
+       [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
+       [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]]
+
+  """
+  def im2col(list, filter_height, filter_width, stride \\ 1, padding \\ 0) do
+    list = if padding == 0, do: list, else: pad(list, padding)
+    org_h = length(list)
+    org_w = length(hd list)
+    out_h = div(org_h - filter_height, stride) + 1
+    out_w = div(org_w - filter_width, stride) + 1
+
+    for y <- (for i <- 0..out_h-1, do: i * stride) |> Enum.filter(&(&1 < org_h)) do
+      for x <- (for i <- 0..out_w-1, do: i * stride) |> Enum.filter(&(&1 < org_w)) do
+        list |> Enum.drop(y) |> Enum.take(filter_height) 
+          |> Enum.map(&(Enum.drop(&1, x)) |> Enum.take(filter_width))
+          |> List.flatten 
+      end
+    end
+  end
 end
