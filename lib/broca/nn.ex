@@ -529,16 +529,20 @@ defmodule Broca.NN do
        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
 
       iex> Broca.NN.pad([[1, 2, 3], [4, 5, 6], [7, 8, 9]], 1)
-      [[0.0, 0.0, 0.0, 0.0, 0.0],[0.0, 1.0, 2.0, 3.0, 0.0],[0.0, 4.0, 5.0, 6.0. 0.0],[0.0, 7.0, 8.0, 9.0, 0.0],[0.0, 0.0, 0.0, 0.0, 0.0]]
+      [[0.0, 0.0, 0.0, 0.0, 0.0],[0.0, 1, 2, 3, 0.0],[0.0, 4, 5, 6, 0.0],[0.0, 7, 8, 9, 0.0],[0.0, 0.0, 0.0, 0.0, 0.0]]
   """
-  def pad(list, pad_count) when is_list(hd list) do
+  def pad(list, pad_count) when is_list(hd(list)) do
     list =
       list
-      |> Enum.map(&(List.duplicate(0.0, pad_count)++(Enum.reverse(List.duplicate(0.0, pad_count)++Enum.reverse(&1)))))
+      |> Enum.map(
+        &(List.duplicate(0.0, pad_count) ++
+            Enum.reverse(List.duplicate(0.0, pad_count) ++ Enum.reverse(&1)))
+      )
 
-    List.duplicate(List.duplicate(0.0, length(hd list)), pad_count)++(Enum.reverse(
-      List.duplicate(List.duplicate(0.0, length(hd list)), pad_count)++(Enum.reverse(list))
-    ))
+    List.duplicate(List.duplicate(0.0, length(hd(list))), pad_count) ++
+      Enum.reverse(
+        List.duplicate(List.duplicate(0.0, length(hd(list))), pad_count) ++ Enum.reverse(list)
+      )
   end
 
   @doc """
@@ -556,26 +560,60 @@ defmodule Broca.NN do
       [[[1, 2, 3, 6, 7, 8, 11, 12, 13], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
        [[11, 12, 13, 16, 17, 18, 21, 22, 23], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]
 
-      iex> list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-      iex>  Broca.NN.im2col(list, 3, 3, 1, 2)
+      iex> list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] |> Enum.map(&(Enum.map(&1, fn x -> x / 1.0 end)))
+      iex>  Broca.NN.im2col(list, 3, 3, 1, 1)
       [[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]],
        [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
        [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]]
 
+      iex> list = [[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]], [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]
+      iex>  Broca.NN.im2col(list, 3, 3, 1, 1)
+      [[[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]],
+       [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
+       [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]],
+       [[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]],
+       [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
+       [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]]]
+
   """
-  def im2col(list, filter_height, filter_width, stride \\ 1, padding \\ 0) do
+  def im2col(list, filter_height, filter_width, stride \\ 1, padding \\ 0)
+
+  def im2col(list, filter_height, filter_width, stride, padding) when is_list(hd(hd(list))) do
+    list
+    |> Enum.map(&im2col(&1, filter_height, filter_width, stride, padding))
+  end
+
+  def im2col(list, filter_height, filter_width, stride, padding) do
     list = if padding == 0, do: list, else: pad(list, padding)
     org_h = length(list)
-    org_w = length(hd list)
+    org_w = length(hd(list))
     out_h = div(org_h - filter_height, stride) + 1
     out_w = div(org_w - filter_width, stride) + 1
 
-    for y <- (for i <- 0..out_h-1, do: i * stride) |> Enum.filter(&(&1 < org_h)) do
-      for x <- (for i <- 0..out_w-1, do: i * stride) |> Enum.filter(&(&1 < org_w)) do
-        list |> Enum.drop(y) |> Enum.take(filter_height) 
-          |> Enum.map(&(Enum.drop(&1, x)) |> Enum.take(filter_width))
-          |> List.flatten 
+    for y <- for(i <- 0..(out_h - 1), do: i * stride) |> Enum.filter(&(&1 < org_h)) do
+      for x <- for(i <- 0..(out_w - 1), do: i * stride) |> Enum.filter(&(&1 < org_w)) do
+        list
+        |> Enum.drop(y)
+        |> Enum.take(filter_height)
+        |> Enum.map(&(Enum.drop(&1, x) |> Enum.take(filter_width)))
+        |> List.flatten()
       end
     end
+  end
+
+  @doc """
+  Max pooling which takes maximum value in each list in the lowest layer.
+
+  ## Examples
+      iex> Broca.NN.max_pooling([[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]], [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]], [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]])
+      [[5.0, 6.0, 6.0], [8.0, 9.0, 9.0], [8.0, 9.0, 9.0]]
+  """
+  def max_pooling(list) when is_list(hd(list)) do
+    list
+    |> Enum.map(&max_pooling(&1))
+  end
+
+  def max_pooling(list) do
+    Enum.max(list)
   end
 end
