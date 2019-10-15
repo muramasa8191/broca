@@ -8,6 +8,9 @@ defprotocol Layer do
 end
 
 defmodule Broca.Layers.MultLayer do
+  @moduledoc """
+  Multiplication Layer
+  """
   defstruct params: [], grads: []
 
   def new(x, y) do
@@ -159,5 +162,55 @@ defmodule Broca.Layers.Affine do
     def get_grads(layer) do
       [layer.grads[:weight], layer.grads[:bias]]
     end
+  end
+
+end
+
+defmodule Broca.Layers.MaxPooling do
+  @moduledoc """
+  Maximum Pooling Layer which apply filter to find maximum value in it.
+  """ 
+
+  defstruct pool_height: 1, pool_width: 1, stride: 1, padding: 0
+
+  def new(height, width, stride, padding) do
+    %Broca.Layers.MaxPooling{pool_height: height, pool_width: width, stride: stride, padding: padding}
+  end
+  defimpl Layer, for: Broca.Layers.MaxPooling do
+
+    @doc """
+    Forward for MaxPooling
+
+    ## Examples
+        iex> input = [[[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]]]
+        iex> pooling = Broca.Layers.MaxPooling.new(3, 3, 1, 0)
+        iex> Layer.forward(pooling, input)
+        [[[[13, 14, 15], [18, 19, 20], [23, 24, 25]]]]
+
+        iex> input = [[[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]], [[[6, 7, 8, 9, 10], [21, 22, 23, 24, 25], [11, 12, 13, 14, 15], [1, 2, 3, 4, 5], [16, 17, 18, 19, 20]]]]
+        iex> pooling = Broca.Layers.MaxPooling.new(3, 3, 1, 0)
+        iex> Layer.forward(pooling, input)
+        [[[[13, 14, 15], [18, 19, 20], [23, 24, 25]]], [[[23, 24, 25], [23, 24, 25], [18, 19, 20]]]]
+    """
+    def forward(layer, input) do
+      Broca.NN.matrix_filtering(input, layer.pool_height, layer.pool_width, layer.stride, layer.padding, fn list -> Enum.max(list) end)
+    end
+
+
+    def backward(layer, dout) do
+
+    end
+    def update(layer, optimize_func) do
+
+    end
+    def batch_update(layer1, layer2) do
+
+    end
+    def get_grads(layer) do
+
+    end
+    def gradient_forward(layer, x, name, idx1, idx2, idx3, diff) do
+
+    end    
   end
 end

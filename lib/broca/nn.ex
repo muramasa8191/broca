@@ -102,6 +102,11 @@ defmodule Broca.NN do
     |> Enum.map(fn {xs, ys} -> mult(xs, ys) end)
   end
 
+  def mult(list1, list2) when not is_list(hd list1) and is_list(hd list2) do
+    list2
+    |> Enum.map(&(mult(list1, &1)))
+  end
+
   def mult(list1, list2) when is_list(list1) and is_list(list2) do
     Enum.zip(list1, list2)
     |> Enum.map(fn {x, y} -> x * y end)
@@ -550,24 +555,24 @@ defmodule Broca.NN do
 
   ## Examples
       iex> list = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]
-      iex>  Broca.NN.im2col(list, 3, 3)
+      iex>  Broca.NN.matrix_filtering(list, 3, 3)
       [[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
        [[6, 7, 8, 11, 12, 13, 16, 17, 18], [7, 8, 9, 12, 13, 14, 17, 18, 19], [8, 9, 10, 13, 14, 15, 18, 19, 20]],
        [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]
 
       iex> list = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]
-      iex>  Broca.NN.im2col(list, 3, 3, 2)
+      iex>  Broca.NN.matrix_filtering(list, 3, 3, 2)
       [[[1, 2, 3, 6, 7, 8, 11, 12, 13], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
        [[11, 12, 13, 16, 17, 18, 21, 22, 23], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]
 
       iex> list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] |> Enum.map(&(Enum.map(&1, fn x -> x / 1.0 end)))
-      iex>  Broca.NN.im2col(list, 3, 3, 1, 1)
+      iex>  Broca.NN.matrix_filtering(list, 3, 3, 1, 1)
       [[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]],
        [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
        [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]]
 
       iex> list = [[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]], [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]
-      iex>  Broca.NN.im2col(list, 3, 3, 1, 1)
+      iex>  Broca.NN.matrix_filtering(list, 3, 3, 1, 1)
       [[[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]],
        [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
        [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]],
@@ -575,15 +580,38 @@ defmodule Broca.NN do
        [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
        [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]]]
 
-  """
-  def im2col(list, filter_height, filter_width, stride \\ 1, padding \\ 0)
+      iex> list = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]
+      iex> Broca.NN.matrix_filtering(list, 3, 3, 1, 0, fn l -> Enum.max(l) end)
+      [[13, 14, 15],
+       [18, 19, 20],
+       [23, 24, 25]]
 
-  def im2col(list, filter_height, filter_width, stride, padding) when is_list(hd(hd(list))) do
+      iex> list = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]
+      iex> Broca.NN.matrix_filtering(list, 3, 3, 1, 0, fn l -> Broca.NN.mult(l, [[1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2]]) end)
+      [[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 4, 6, 12, 14, 16, 22, 24, 26]],
+       [[2, 3, 4, 7, 8, 9, 12, 13, 14], [4, 6, 8, 14, 16, 18, 24, 26, 28]],
+       [[3, 4, 5, 8, 9, 10, 13, 14, 15], [6, 8, 10, 16, 18, 20, 26, 28, 30]]],
+       [[[6, 7, 8, 11, 12, 13, 16, 17, 18], [12, 14, 16, 22, 24, 26, 32, 34, 36]],
+       [[7, 8, 9, 12, 13, 14, 17, 18, 19], [14, 16, 18, 24, 26, 28, 34, 36, 38]],
+       [[8, 9, 10, 13, 14, 15, 18, 19, 20], [16, 18, 20, 26, 28, 30, 36, 38, 40]]],
+       [[[11, 12, 13, 16, 17, 18, 21, 22, 23], [22, 24, 26, 32, 34, 36, 42, 44, 46]],
+       [[12, 13, 14, 17, 18, 19, 22, 23, 24], [24, 26, 28, 34, 36, 38, 44, 46, 48]],
+       [[13, 14, 15, 18, 19, 20, 23, 24, 25], [26, 28, 30, 36, 38, 40, 46, 48, 50]]]]
+
+      iex> list = [[[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]]]
+      iex> w = [[1, 1, 1, 1, 1, 1 , 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2]]
+      iex> Broca.NN.matrix_filtering(list, 3, 3, 1, 0, fn l -> Broca.NN.mult(l, w) |> Broca.NN.sum(:row) |> Broca.NN.add([1, 2]) end)
+      [[[[[64, 128], [73, 146], [82, 164]], [[109, 218], [118, 236], [127, 254]], [[154, 308], [163, 326], [172, 344]]]]]
+
+  """
+  def matrix_filtering(list, filter_height, filter_width, stride \\ 1, padding \\ 0, map_func \\ fn list -> list end)
+
+  def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func) when is_list(hd(hd(list))) do
     list
-    |> Enum.map(&im2col(&1, filter_height, filter_width, stride, padding))
+    |> Enum.map(&matrix_filtering(&1, filter_height, filter_width, stride, padding, map_func))
   end
 
-  def im2col(list, filter_height, filter_width, stride, padding) do
+  def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func) do
     list = if padding == 0, do: list, else: pad(list, padding)
     org_h = length(list)
     org_w = length(hd(list))
@@ -597,23 +625,8 @@ defmodule Broca.NN do
         |> Enum.take(filter_height)
         |> Enum.map(&(Enum.drop(&1, x) |> Enum.take(filter_width)))
         |> List.flatten()
+        |> map_func.()
       end
     end
-  end
-
-  @doc """
-  Max pooling which takes maximum value in each list in the lowest layer.
-
-  ## Examples
-      iex> Broca.NN.max_pooling([[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]], [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]], [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]])
-      [[5.0, 6.0, 6.0], [8.0, 9.0, 9.0], [8.0, 9.0, 9.0]]
-  """
-  def max_pooling(list) when is_list(hd(list)) do
-    list
-    |> Enum.map(&max_pooling(&1))
-  end
-
-  def max_pooling(list) do
-    Enum.max(list)
   end
 end
