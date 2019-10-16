@@ -13,12 +13,20 @@ defmodule Broca.Dataset do
     @test_label "t10k-labels-idx1-ubyte"
 
     def load_train_data(normalize \\ True, is_one_hot \\ True, flatten \\ True) do
-      {parse_data(File.read!(Application.app_dir(:broca, "priv/" <> @train_data)), normalize, flatten),
+      {parse_data(
+         File.read!(Application.app_dir(:broca, "priv/" <> @train_data)),
+         normalize,
+         flatten
+       ),
        parse_label(File.read!(Application.app_dir(:broca, "priv/" <> @train_label)), is_one_hot)}
     end
 
     def load_test_data(normalize \\ True, is_one_hot \\ True, flatten \\ True) do
-      {parse_data(File.read!(Application.app_dir(:broca, "priv/" <> @test_data)), normalize, flatten),
+      {parse_data(
+         File.read!(Application.app_dir(:broca, "priv/" <> @test_data)),
+         normalize,
+         flatten
+       ),
        parse_label(File.read!(Application.app_dir(:broca, "priv/" <> @test_label)), is_one_hot)}
     end
 
@@ -68,13 +76,15 @@ defmodule Broca.Dataset do
               1..rows
               |> Enum.reduce({[], rest}, fn _, {list, raws} ->
                 <<img::binary-size(cols), raws::binary>> = raws
+
                 if normalize == True do
                   {[:erlang.binary_to_list(img) |> Enum.map(&(&1 / 255.0))] ++ list, raws}
                 else
                   {[:erlang.binary_to_list(img)] ++ list, raws}
                 end
               end)
-            {[Enum.reverse(image)]++acc, rest}
+
+            {[Enum.reverse(image)] ++ acc, rest}
           end
         )
 

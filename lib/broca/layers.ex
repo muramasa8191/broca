@@ -163,21 +163,25 @@ defmodule Broca.Layers.Affine do
       [layer.grads[:weight], layer.grads[:bias]]
     end
   end
-
 end
 
 defmodule Broca.Layers.MaxPooling do
   @moduledoc """
   Maximum Pooling Layer which apply filter to find maximum value in it.
-  """ 
+  """
 
   defstruct pool_height: 1, pool_width: 1, stride: 1, padding: 0
 
   def new(height, width, stride, padding) do
-    %Broca.Layers.MaxPooling{pool_height: height, pool_width: width, stride: stride, padding: padding}
+    %Broca.Layers.MaxPooling{
+      pool_height: height,
+      pool_width: width,
+      stride: stride,
+      padding: padding
+    }
   end
-  defimpl Layer, for: Broca.Layers.MaxPooling do
 
+  defimpl Layer, for: Broca.Layers.MaxPooling do
     @doc """
     Forward for MaxPooling
 
@@ -193,24 +197,29 @@ defmodule Broca.Layers.MaxPooling do
         [[[[13, 14, 15], [18, 19, 20], [23, 24, 25]]], [[[23, 24, 25], [23, 24, 25], [18, 19, 20]]]]
     """
     def forward(layer, input) do
-      Broca.NN.matrix_filtering(input, layer.pool_height, layer.pool_width, layer.stride, layer.padding, fn list -> Enum.max(list) end)
+      Broca.NN.matrix_filtering(
+        input,
+        layer.pool_height,
+        layer.pool_width,
+        layer.stride,
+        layer.padding,
+        fn list -> Enum.max(list) end
+      )
     end
-
 
     def backward(layer, dout) do
-
     end
+
     def update(layer, optimize_func) do
-
     end
+
     def batch_update(layer1, layer2) do
-
     end
+
     def get_grads(layer) do
-
     end
-    def gradient_forward(layer, x, name, idx1, idx2, idx3, diff) do
 
-    end    
+    def gradient_forward(layer, x, name, idx1, idx2, idx3, diff) do
+    end
   end
 end

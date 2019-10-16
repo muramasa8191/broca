@@ -102,9 +102,9 @@ defmodule Broca.NN do
     |> Enum.map(fn {xs, ys} -> mult(xs, ys) end)
   end
 
-  def mult(list1, list2) when not is_list(hd list1) and is_list(hd list2) do
+  def mult(list1, list2) when not is_list(hd(list1)) and is_list(hd(list2)) do
     list2
-    |> Enum.map(&(mult(list1, &1)))
+    |> Enum.map(&mult(list1, &1))
   end
 
   def mult(list1, list2) when is_list(list1) and is_list(list2) do
@@ -604,9 +604,17 @@ defmodule Broca.NN do
       [[[[[64, 128], [73, 146], [82, 164]], [[109, 218], [118, 236], [127, 254]], [[154, 308], [163, 326], [172, 344]]]]]
 
   """
-  def matrix_filtering(list, filter_height, filter_width, stride \\ 1, padding \\ 0, map_func \\ fn list -> list end)
+  def matrix_filtering(
+        list,
+        filter_height,
+        filter_width,
+        stride \\ 1,
+        padding \\ 0,
+        map_func \\ fn list -> list end
+      )
 
-  def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func) when is_list(hd(hd(list))) do
+  def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func)
+      when is_list(hd(hd(list))) do
     list
     |> Enum.map(&matrix_filtering(&1, filter_height, filter_width, stride, padding, map_func))
   end
