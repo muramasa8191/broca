@@ -172,6 +172,62 @@ defmodule Broca.NN do
   end
 
   @doc """
+  Transpose axes
+
+  ## Examples
+      iex> list = [[[[63, 126], [72, 144], [81, 162]], [[108, 216], [117, 234], [126, 252]], [[153, 306], [162, 324], [171, 342]]], \
+      [[[288, 576], [297, 594], [306, 612]], [[333, 666], [342, 684], [351, 702]], [[378, 756], [387, 774], [396, 792]]]]
+      iex> Broca.NN.transpose(list, 0, 3, 1, 2)
+      [[[[63, 72, 81], [108, 117, 126], [153, 162, 171]], [[126, 144, 162], [216, 234, 252], [306, 324, 342]]],\
+       [[[288, 297, 306], [333, 342, 351], [378, 387, 396]], [[576, 594, 612], [666, 684, 702], [756, 774, 792]]]]
+  """
+  def transpose(list, 0, 3, 1, 2) do
+    list
+    |> Enum.map(&transpose(&1, 2, 0, 1))
+  end
+
+  def transpose(batch, 2, 0, 1) do
+    batch
+    |> Enum.reduce(
+      List.duplicate([], length(hd(hd(batch)))),
+      fn list, acc ->
+        data = transpose(list)
+        Enum.zip(data, acc) |> Enum.map(fn {val, ac} -> [val] ++ ac end)
+      end
+    )
+    |> Enum.map(&Enum.reverse(&1))
+  end
+
+  @doc """
+  Reshape the 2D list
+
+  ## Examples
+      iex> list = [1, 2, 3, 4]
+      iex> Broca.NN.reshape(list, [2, 2])
+      [[1, 2], [3, 4]]
+
+      iex> list = [1, 2, 3, 4, 5, 6]
+      iex> Broca.NN.reshape(list, [3, 2])
+      [[1, 2], [3, 4], [5, 6]]
+
+      iex> list = [1, 2, 3, 4, 5, 6, 7, 8]
+      iex> Broca.NN.reshape(list, [2, 2, 2])
+      [[[1, 2], [3, 4]],[[5, 6], [7, 8]]]
+
+      iex> list = [[[[[1, 2], [3, 4]], [[5, 6], [7, 8]]]], [[[[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]]]
+      iex> Broca.NN.reshape(list, [2, 2, 2, 2])
+      [[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]
+  """
+  def reshape(list, dims) do
+    list = if is_list(hd(list)), do: List.flatten(list), else: list
+
+    dims
+    |> Enum.reverse()
+    |> Enum.reduce(list, fn dim, data -> Enum.chunk_every(data, dim) end)
+    |> hd
+  end
+
+  @doc """
   Dot product
 
   ## Examples
