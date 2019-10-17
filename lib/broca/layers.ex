@@ -229,20 +229,21 @@ defmodule Broca.Layers.MaxPooling do
           layer.padding,
           fn list -> Enum.max(list) end
         )
+
       mask =
         Broca.NN.matrix_filtering(
-            input,
-            layer.pool_height,
-            layer.pool_width,
-            layer.stride,
-            layer.padding,
-            fn list -> Broca.NN.argmax(list) |> Broca.NN.one_hot((length list) - 1) end
-          )
+          input,
+          layer.pool_height,
+          layer.pool_width,
+          layer.stride,
+          layer.padding,
+          fn list -> Broca.NN.argmax(list) |> Broca.NN.one_hot(length(list) - 1) end
+        )
+
       {%Broca.Layers.MaxPooling{layer | mask: mask}, res}
     end
 
     def backward(layer, dout) do
-      
     end
 
     def update(layer, optimize_func) do
