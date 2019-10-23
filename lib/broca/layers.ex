@@ -170,7 +170,13 @@ defmodule Broca.Layers.MaxPooling do
   Maximum Pooling Layer which apply filter to find maximum value in it.
   """
 
-  defstruct pool_height: 1, pool_width: 1, stride: 1, padding: 0, mask: nil
+  defstruct pool_height: 1,
+            pool_width: 1,
+            stride: 1,
+            padding: 0,
+            original_width: 0,
+            original_height: 0,
+            mask: nil
 
   def new(height, width, stride, padding) do
     %Broca.Layers.MaxPooling{
@@ -189,34 +195,24 @@ defmodule Broca.Layers.MaxPooling do
         iex> input = [[[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]]]
         iex> pooling = Broca.Layers.MaxPooling.new(3, 3, 1, 0)
         iex> Layer.forward(pooling, input)
-        {%Broca.Layers.MaxPooling{pool_height: 3, pool_width: 3, stride: 1, padding: 0,
-         mask: [[[[[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
-         [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
-         [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]]]]]},
+        {%Broca.Layers.MaxPooling{pool_height: 3, pool_width: 3, stride: 1, padding: 0, original_height: 5, original_width: 5,
+         mask: [[[[8, 8, 8], [8, 8, 8], [8, 8, 8]]]]},
           [[[[13, 14, 15], [18, 19, 20], [23, 24, 25]]]]}
 
         iex> input = [[[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]],\
         [[[6, 7, 8, 9, 10], [21, 22, 23, 24, 25], [11, 12, 13, 14, 15], [1, 2, 3, 4, 5], [16, 17, 18, 19, 20]]]]
         iex> pooling = Broca.Layers.MaxPooling.new(3, 3, 1, 0)
         iex> Layer.forward(pooling, input)
-        {%Broca.Layers.MaxPooling{pool_height: 3, pool_width: 3, stride: 1, padding: 0,
-         mask: [[[[[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
-         [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
-         [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]]]],
-         [[[[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]],
-         [[0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
-         [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]]]]]},
+        {%Broca.Layers.MaxPooling{pool_height: 3, pool_width: 3, stride: 1, padding: 0, original_height: 5, original_width: 5,
+         mask: [[[[8, 8, 8], [8, 8, 8], [8, 8, 8]]], [[[5, 5, 5], [2, 2, 2], [8, 8, 8]]]]},
          [[[[13, 14, 15], [18, 19, 20], [23, 24, 25]]], [[[23, 24, 25], [23, 24, 25], [18, 19, 20]]]]}
 
         iex> input = [[[[ 63,  72,  81], [108, 117, 126], [153, 162, 171]], [[126, 144, 162], [216, 234, 252], [306, 324, 342]]], \
         [[[288, 297, 306], [333, 342, 351], [378, 387, 396]], [[576, 594, 612], [666, 684, 702], [756, 774, 792]]]]
         iex> pooling = Broca.Layers.MaxPooling.new(2, 2, 1, 0)
         iex> Layer.forward(pooling, input)
-        {%Broca.Layers.MaxPooling{pool_height: 2, pool_width: 2, stride: 1, padding: 0,
-         mask: [[[[[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]], [[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]]],
-         [[[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]], [[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]]]],
-         [[[[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]], [[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]]],
-         [[[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]], [[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]]]]]},
+        {%Broca.Layers.MaxPooling{pool_height: 2, pool_width: 2, stride: 1, padding: 0, original_height: 3, original_width: 3,
+         mask: [[[[3, 3], [3, 3]], [[3, 3], [3, 3]]], [[[3, 3], [3, 3]], [[3, 3], [3, 3]]]]},
          [[[[117, 126], [162, 171]], [[234, 252], [324, 342]]], [[[342, 351], [387, 396]], [[684, 702], [774, 792]]]]}
     """
     def forward(layer, input) do
@@ -237,25 +233,78 @@ defmodule Broca.Layers.MaxPooling do
           layer.pool_width,
           layer.stride,
           layer.padding,
-          fn list -> Broca.NN.argmax(list) |> Broca.NN.one_hot(length(list) - 1) end
+          fn list -> Broca.NN.argmax(list) end
         )
 
-      {%Broca.Layers.MaxPooling{layer | mask: mask}, res}
+      [_, _, height, width] = Broca.NN.shape(input)
+
+      {%Broca.Layers.MaxPooling{
+         layer
+         | mask: mask,
+           original_height: height,
+           original_width: width
+       }, res}
     end
 
+    @doc """
+    Backward for MaxPooling
+
+    ## Examples
+        iex> pool = %Broca.Layers.MaxPooling{pool_height: 2, pool_width: 2, stride: 1, padding: 0, original_height: 3, original_width: 3, \
+        mask: [[[[3, 3], [3, 3]], [[3, 3], [3, 3]]], [[[3, 3], [3, 3]], [[3, 3], [3, 3]]]]}
+        iex> Layer.backward(pool, [[[[0.1, 0.2], [0.3, 0.4]], [[0.5, 0.6], [0.7, 0.8]]], [[[0.9, 1.0], [1.1, 1.2]], [[1.3, 1.4], [1.5, 1.6]]]])
+        [[[[0.0, 0.0, 0.0], [0.0, 0.1, 0.2], [0.0, 0.3, 0.4]],
+          [[0.0, 0.0, 0.0], [0.0, 0.5, 0.6], [0.0, 0.7, 0.8]]],
+         [[[0.0, 0.0, 0.0], [0.0, 0.9, 1.0], [0.0, 1.1, 1.2]],
+          [[0.0, 0.0, 0.0], [0.0, 1.3, 1.4], [0.0, 1.5, 1.6]]]]
+    """
     def backward(layer, dout) do
+      Enum.zip(layer.mask, dout)
+      |> Enum.map(fn {mask_batch, dout_batch} ->
+        Enum.zip(mask_batch, dout_batch)
+        |> Enum.map(fn {mask_channel, dout_channel} ->
+          {_, result} =
+            Enum.zip(mask_channel, dout_channel)
+            |> Enum.reduce(
+              {0, %{}},
+              fn {masks, list}, {idx1, map1} ->
+                {_, result_map} =
+                  Enum.zip(masks, list)
+                  |> Enum.reduce(
+                    {0, map1},
+                    fn {mask, val}, {idx2, map} ->
+                      idx =
+                        (div(mask, layer.pool_width) + idx1) * layer.original_width + idx2 +
+                          rem(mask, layer.pool_width)
+
+                      {idx2 + 1, Map.update(map, idx, val, fn v -> v + val end)}
+                    end
+                  )
+
+                {idx1 + 1, result_map}
+              end
+            )
+
+          for y <- 0..(layer.original_height - 1) do
+            for x <- 0..(layer.original_width - 1) do
+              idx = y * layer.original_width + x
+              Map.get(result, idx, 0.0)
+            end
+          end
+        end)
+      end)
     end
 
-    def update(layer, optimize_func) do
+    def update(_layer, _optimize_func) do
     end
 
-    def batch_update(layer1, layer2) do
+    def batch_update(_layer1, _layer2) do
     end
 
-    def get_grads(layer) do
+    def get_grads(_layer) do
     end
 
-    def gradient_forward(layer, x, name, idx1, idx2, idx3, diff) do
+    def gradient_forward(_layer, _x, _name, _idx1, _idx2, _idx3, _diff) do
     end
   end
 end

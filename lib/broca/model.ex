@@ -35,7 +35,6 @@ defmodule Broca.Models do
   end
 
   defmodule TwoLayerNet do
-    # def new(input_size, hidden_size, out_size, weight_init_std \\ 0.01) do
     def new(input_size, hidden_size, out_size) do
       affine1 =
         Broca.Layers.Affine.new(

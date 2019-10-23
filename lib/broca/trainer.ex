@@ -31,6 +31,7 @@ defmodule Broca.Trainer do
     1..epochs
     |> Enum.reduce({model, optimizer}, fn epoch, {e_model, e_optimizer} ->
       IO.puts("Epoch #{epoch}/#{epochs}")
+      s = NaiveDateTime.utc_now()
 
       {epoch_model, epoch_optimizer} =
         1..iterate
@@ -54,15 +55,16 @@ defmodule Broca.Trainer do
 
           loss = Broca.Models.TwoLayerNet.loss(updated_model, loss_layer, x_batch, t_batch)
 
-          progress = round(i / iterate * 10)
+          progress = floor(i / iterate * 20)
+          e = NaiveDateTime.utc_now()
 
           if i != iterate do
             IO.puts(
               "\e[1A#{i}/#{iterate} [#{
-                if progress != 0, do: List.to_string(for _ <- 1..(progress * 2), do: "=")
-              }#{List.to_string(for _ <- 1..((10 - progress) * 2), do: " ")}] - loss: #{
+                if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
+              }#{List.to_string(for _ <- 1..(20 - progress), do: " ")}] - loss: #{
                 Float.floor(loss, 5)
-              }          "
+              } - #{NaiveDateTime.diff(e, s, :millisecond) / 1000} sec          "
             )
           else
             acc = Broca.Models.TwoLayerNet.accuracy(updated_model, x_batch, t_batch)
@@ -70,8 +72,10 @@ defmodule Broca.Trainer do
             if is_nil(test_data) do
               IO.puts(
                 "\e[1A#{i}/#{iterate} [#{
-                  if progress != 0, do: List.to_string(for _ <- 1..(progress * 2), do: "=")
-                }] - loss: #{Float.floor(loss, 5)} - acc: #{Float.floor(acc, 5)}"
+                  if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
+                }] - loss: #{Float.floor(loss, 5)} - acc: #{Float.floor(acc, 5)} - #{
+                  NaiveDateTime.diff(e, s, :millisecond) / 1000
+                } sec"
               )
             else
               {x_test, t_test} = test_data
@@ -80,10 +84,12 @@ defmodule Broca.Trainer do
 
               IO.puts(
                 "\e[1A#{i}/#{iterate} [#{
-                  if progress != 0, do: List.to_string(for _ <- 1..(progress * 2), do: "=")
+                  if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
                 }] - loss: #{Float.floor(loss, 5)} - acc: #{Float.floor(acc, 5)} - test_loss: #{
                   Float.floor(test_loss, 5)
-                } - test_acc: #{Float.floor(test_acc, 5)}"
+                } - test_acc: #{Float.floor(test_acc, 5)} - #{
+                  NaiveDateTime.diff(e, s, :millisecond) / 1000
+                } sec"
               )
             end
           end
