@@ -136,6 +136,11 @@ defmodule Broca.NN do
       iex> Broca.NN.division([[1, 2, 3], [1, 2, 3]], 2)
       [[0.5, 1.0, 1.5], [0.5, 1.0, 1.5]]
   """
+  def division(list1, list2) when is_list(list1) and is_list(list2) do
+    Enum.zip(list1, list2)
+    |> Enum.map(fn {sub_list1, sub_list2} -> division(sub_list1, sub_list2) end)
+  end
+
   def division(list, y) when is_list(list) do
     list
     |> Enum.map(&division(&1, y))
@@ -145,8 +150,40 @@ defmodule Broca.NN do
     x / y
   end
 
+  defguard is_2dlist(list) when is_list(hd(list)) and not is_list(hd(hd(list)))
+  defguard is_3dlist(list) when is_list(hd(hd(list))) and not is_list(hd(hd(hd(list))))
+  defguard is_4dlist(list) when is_list(hd(hd(hd(list))))
+
+  defp _concat(list1, list2, merge \\ True)
+
+  defp _concat(list, nil, _) do
+    list
+  end
+
+  defp _concat(list1, list2, True) when is_list(hd(list1)) do
+    Enum.zip(list1, list2)
+    |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, True) end)
+  end
+
+  defp _concat(list1, list2, False) when is_list(hd(hd(list1))) do
+    Enum.zip(list1, list2)
+    |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, False) end)
+  end
+
+  defp _concat(list1, list2, _) do
+    Enum.concat(list1, list2)
+  end
+
+  defp transpose_base([h, _]) do
+    List.duplicate([], h)
+  end
+
+  defp transpose_base([h | t]) do
+    List.duplicate(transpose_base(t), h)
+  end
+
   @doc """
-  Transpose the `list` given
+  Transpose the 4d `list` given
 
   ## Examples
       iex> Broca.NN.transpose([1, 2, 3])
@@ -154,9 +191,67 @@ defmodule Broca.NN do
 
       iex> Broca.NN.transpose([[1, 2, 3], [4, 5, 6]])
       [[1, 4], [2, 5], [3, 6]]
+
+      iex> list = [[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]], \
+      [[26, 27, 28, 29, 30], [31, 32, 33, 34, 35], [36, 37, 38, 39, 40], [41, 42, 43, 44, 45], [46, 47, 48, 49, 50]]]
+      iex> Broca.NN.transpose(list)
+      [[[1, 26], [6, 31], [11, 36], [16, 41], [21, 46]],
+       [[2, 27], [7, 32], [12, 37], [17, 42], [22, 47]],
+       [[3, 28], [8, 33], [13, 38], [18, 43], [23, 48]],
+       [[4, 29], [9, 34], [14, 39], [19, 44], [24, 49]],
+       [[5, 30], [10, 35], [15, 40], [20, 45], [25, 50]]]
+
+      iex> list = [[[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]], [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]], \
+      [[[25 , 26, 27, 28], [29, 30, 31, 32], [33, 34, 35, 36]], [[37, 38, 39, 40], [41, 42, 43, 44], [45, 46, 47 , 48]]]]
+      iex> Broca.NN.transpose(list)
+      [[[[1, 25], [13, 37]], [[5, 29], [17, 41]], [[9, 33], [21, 45]]],
+      [[[2, 26], [14, 38]], [[6, 30], [18, 42]], [[10, 34], [22, 46]]],
+      [[[3, 27], [15, 39]], [[7, 31], [19, 43]], [[11, 35], [23, 47]]],
+      [[[4, 28], [16, 40]], [[8, 32], [20, 44]], [[12, 36], [24, 48]]]]
+
   """
   @spec transpose([number]) :: [number]
-  def transpose(list) when is_list(hd(list)) do
+  def transpose(list) when is_4dlist(list) do
+    arr = List.duplicate([], length(hd(hd(hd(list)))))
+
+    list
+    |> Enum.reverse()
+    |> Enum.map(fn list2 ->
+      Enum.map(Enum.reverse(list2), fn list3 ->
+        Enum.reduce(Enum.reverse(list3), arr, fn sub_list, arr ->
+          Enum.zip(sub_list, arr)
+          |> Enum.map(&([[[elem(&1, 0)]]] ++ elem(&1, 1)))
+        end)
+      end)
+      |> Enum.reduce(
+        nil,
+        fn channel, acc -> _concat(channel, acc, False) end
+      )
+    end)
+    |> Enum.reduce(
+      nil,
+      fn channel, acc -> _concat(channel, acc) end
+    )
+  end
+
+  def transpose(list) when is_3dlist(list) do
+    arr = List.duplicate([], length(hd(hd(list))))
+
+    list
+    |> Enum.reverse()
+    |> Enum.map(fn list2 ->
+      Enum.reduce(Enum.reverse(list2), arr, fn sub_list, arr ->
+        Enum.zip(sub_list, arr)
+        |> Enum.map(&([[elem(&1, 0)]] ++ elem(&1, 1)))
+      end)
+    end)
+    |> Enum.reduce(
+      nil,
+      fn batch, acc -> _concat(batch, acc) end
+    )
+  end
+
+  def transpose(list) when is_2dlist(list) do
     arr = List.duplicate([], length(hd(list)))
 
     list
@@ -541,6 +636,10 @@ defmodule Broca.NN do
       iex> Broca.NN.zeros_like([[1, 2], [3, 4, 5]])
       [[0.0, 0.0], [0.0, 0.0, 0.0]]
   """
+  def zeros_like([]) do
+    []
+  end
+
   def zeros_like(list) when is_list(hd(list)) do
     list |> Enum.map(&zeros_like(&1))
   end
@@ -569,6 +668,35 @@ defmodule Broca.NN do
 
   def shape(_, res) do
     Enum.reverse(res)
+  end
+
+  @doc """
+  Create Shape string
+
+  ## Examples
+      iex> Broca.NN.shape_string([[1, 2], [2, 2]])
+      "[2, 2]"
+  """
+  def shape_string([]) do
+    "[]"
+  end
+
+  def shape_string(list) do
+    list_string(shape(list))
+  end
+
+  def list_string(list) do
+    str =
+      list
+      |> Enum.reduce(
+        "",
+        fn dim, str ->
+          (str <> Integer.to_string(dim)) <> ", "
+        end
+      )
+      |> String.trim_trailing(", ")
+
+    ("[" <> str) <> "]"
   end
 
   @doc """
@@ -692,5 +820,13 @@ defmodule Broca.NN do
         |> map_func.()
       end
     end
+  end
+
+  def for_each(list, func) when is_list(list) do
+    Enum.map(list, &for_each(&1, func))
+  end
+
+  def for_each(val, func) do
+    func.(val)
   end
 end

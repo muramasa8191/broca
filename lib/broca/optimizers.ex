@@ -1,96 +1,13 @@
-defprotocol Optimizer do
+defprotocol Broca.Optimizer do
   def init(optimizer, model)
   def update(optimizer, model, learning_rate)
-  def batch_update(optimizers)
-end
-
-defmodule Broca.Optimizers.AdaGrad do
-  defstruct h: nil, init: False
-
-  defimpl Optimizer, for: Broca.Optimizers.AdaGrad do
-    @doc """
-    Constructor.
-
-    ## Examples
-      iex> Optimizer.init(%Broca.Optimizers.AdaGrad{}, [%Broca.Layers.Affine{grads: [weight: [[1, 2], [3, 4]], bias: [5, 6]]}, \
-          %Broca.Activations.ReLU{}, %Broca.Layers.Affine{grads: [weight: [[1, 2, 3], [4, 5, 6]], bias: [8, 9, 10]]}, \
-          %Broca.Activations.Softmax{}])
-      %Broca.Optimizers.AdaGrad{h: [[[[0.0, 0.0], [0.0, 0.0]], [0.0, 0.0]], [], [[[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], [0.0, 0.0, 0.0]], []], init: True}
-    """
-    def init(_, model) do
-      h = model |> Enum.map(&(Layer.get_grads(&1) |> Broca.NN.zeros_like()))
-      %Broca.Optimizers.AdaGrad{h: h, init: True}
-    end
-
-    def update(optimizer, model, learning_rate) do
-      h =
-        Enum.zip(optimizer.h, model)
-        |> Enum.map(fn {opt, mod} ->
-          Broca.Optimizers.AdaGrad.update_h(opt, Layer.get_grads(mod))
-        end)
-
-      updated_model =
-        Enum.zip(h, model)
-        |> Enum.map(fn {h2, layer} ->
-          Layer.update(layer, fn param, grad, idx ->
-            Broca.Optimizers.AdaGrad.optimize(param, grad, h2, learning_rate, idx)
-          end)
-        end)
-
-      {updated_model, %Broca.Optimizers.AdaGrad{init: True, h: h}}
-    end
-
-    def batch_update(optimizers) do
-      hd(optimizers)
-    end
-  end
-
-  def update_h(_, []) do
-    []
-  end
-
-  def update_h(hs, grads) when is_list(hs) do
-    Enum.zip(hs, grads)
-    |> Enum.map(fn {h, g} -> update_h(h, g) end)
-  end
-
-  def update_h(h, grad) do
-    h + grad * grad
-  end
-
-  def optimize(param, grad, h, learning_rate, idx) when idx == -1 do
-    optimize(param, grad, h, learning_rate)
-  end
-
-  def optimize(param, grad, h, learning_rate, idx) when idx == 0 do
-    optimize(param, grad, hd(h), learning_rate, idx - 1)
-  end
-
-  def optimize(param, grad, h, learning_rate, idx) do
-    optimize(param, grad, tl(h), learning_rate, idx - 1)
-  end
-
-  def optimize(param, grad, h, learning_rate) when is_list(grad) do
-    # if length(param) != length(h) do
-    #   raise("size not match: param(#{length(param)}) != h(#{length(h)})")
-    # else
-    #   IO.puts("size match: param(#{length(param)}) != h(#{length(h)})")
-    # end
-    Enum.zip(param, grad)
-    |> Enum.zip(h)
-    |> Enum.map(fn {{p, g}, h2} -> optimize(p, g, h2, learning_rate) end)
-  end
-
-  def optimize(param, grad, h, learning_rate) do
-    # if is_list(h) or is_list(param) or is_list(grad), do: raise("list h:#{IO.inspect(h)}, param: #{IO.inspect(param)}, grad: #{IO.inspect(grad)}")
-    param - learning_rate * grad / (:math.sqrt(h) + 1.0e-7)
-  end
+  def batch_update(optimizer, model1, model2, learning_rate, cnt)
 end
 
 defmodule Broca.Optimizers.SGD do
   defstruct init: True
 
-  defimpl Optimizer, for: Broca.Optimizers.SGD do
+  defimpl Broca.Optimizer, for: Broca.Optimizers.SGD do
     def init(_, _) do
       %Broca.Optimizers.SGD{}
     end
@@ -107,9 +24,37 @@ defmodule Broca.Optimizers.SGD do
       {updated_model, %Broca.Optimizers.SGD{}}
     end
 
-    def batch_update(optimizers) do
-      hd(optimizers)
+    def batch_update(_, model1, model2, learning_rate, _) do
+      updated_model =
+        Enum.zip(model1, model2)
+        |> Enum.map(
+          &Layer.batch_update(elem(&1, 0), elem(&1, 1), fn params, grads ->
+            Keyword.keys(grads)
+            |> Enum.reduce([],
+              fn key, keyword ->
+                Keyword.put_new(
+                  keyword,
+                  key,
+                  Broca.Optimizers.SGD.update_param(params[key], grads[key], learning_rate)
+                )
+              end)
+          end)
+        )
+
+      {updated_model, %Broca.Optimizers.SGD{}}
     end
+  end
+
+  def update_params(params, grads, learning_rate) do
+    Keyword.keys(params)
+    |> Enum.reduce(
+      [],
+      &Keyword.put_new(
+        &2,
+        &1,
+        update_param(Keyword.get(params, &1), Keyword.get(grads, &1), learning_rate)
+      )
+    )
   end
 
   def update_param(params, grads, learning_rate) when is_list(params) do
@@ -119,5 +64,15 @@ defmodule Broca.Optimizers.SGD do
 
   def update_param(param, grad, learning_rate) do
     param - grad * learning_rate
+  end
+end
+
+defmodule Broca.Optimizers do
+  def create(type, model) do
+    case type do
+      :adam -> Broca.Optimizer.init(%Broca.Optimizers.Adam{}, model)
+      :adaGrad -> Broca.Optimizer.init(%Broca.Optimizers.AdaGrad{}, model)
+      _ -> Broca.Optimizer.init(%Broca.Optimizers.SGD{}, model)
+    end
   end
 end

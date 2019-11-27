@@ -8,17 +8,14 @@ defmodule Broca.Models do
 
     @spec forward([t], [number]) :: [t]
     def forward(layers, input) do
-      {outs, res} =
-        layers
-        |> Enum.reduce(
-          {[], input},
-          fn layer, {layers, input} ->
-            {layer, out} = Layer.forward(layer, input)
-            {[layer] ++ layers, out}
-          end
-        )
-
-      {outs, res}
+      layers
+      |> Enum.reduce(
+        {[], input},
+        fn layer, {layers, input} ->
+          {layer, out} = Layer.forward(layer, input)
+          {[layer] ++ layers, out}
+        end
+      )
     end
 
     @spec backward([number], [t]) :: [t]
@@ -32,31 +29,94 @@ defmodule Broca.Models do
         end
       )
     end
+
+    def gradient(model, loss_layer, x, t) do
+      {forward_model, _} = forward(model, x)
+
+      Loss.backward(loss_layer, t)
+      |> Model.backward(forward_model)
+      |> elem(0)
+    end
+
+    def accuracy(y, t) do
+      Enum.zip(Broca.NN.argmax(y), Broca.NN.argmax(t))
+      |> Enum.reduce(0, fn {p, a}, acc -> if p == a, do: acc + 1, else: acc end)
+      |> Kernel./(length(t))
+    end
+
+    def loss_and_accuracy(model, loss_layer, {x, t}, chunk_amount \\ 1) do
+      Enum.zip(x, t)
+      |> Stream.chunk_every(chunk_amount)
+      |> Flow.from_enumerable(max_demand: 1, stages: 4)
+      |> Flow.map(fn chunk ->
+        {x_chunk, t_chunk} = Enum.unzip(chunk)
+        {_, y} = forward(model, x_chunk)
+        [
+          Loss.loss(loss_layer, y, t_chunk) * chunk_amount,
+          Enum.zip(Broca.NN.argmax(y), Broca.NN.argmax(t_chunk))
+          |> Enum.reduce(0, fn {p, a}, acc -> if p == a, do: acc + 1, else: acc end)
+        ]
+      end)
+      |> Enum.reduce(
+        [0.0, 0.0],
+        fn loss_accurary, acc -> Broca.NN.add(acc, loss_accurary) end
+      )
+      |> Broca.NN.division(length(t))
+    end
+
+    def update(model, optimizer, learning_rate \\ 0.1)
+
+    def update(models, optimizer, learning_rate) when is_list(hd(models)) do
+      models
+      |> Enum.reduce(
+        {{hd(models), optimizer}, 0},
+        fn new_model, {{updated_model, updated_optimizer}, cnt} ->
+          {
+            Broca.Optimizer.batch_update(
+              updated_optimizer,
+              updated_model,
+              new_model,
+              learning_rate,
+              cnt
+            ),
+            cnt + 1
+          }
+        end
+      )
+      |> elem(0)
+    end
+
+    def update(model, optimizer, learning_rate) do
+      Broca.Optimizer.update(optimizer, model, learning_rate)
+    end
+
+    def loss(model, loss_layer, {x, t}) do
+      {_, y} = forward(model, x)
+      {Loss.loss(loss_layer, y, t), y}
+    end
   end
 
   defmodule TwoLayerNet do
     def new(input_size, hidden_size, out_size) do
       affine1 =
         Broca.Layers.Affine.new(
-          "a1",
           Broca.Random.randn(input_size, hidden_size)
           |> Broca.NN.mult(:math.sqrt(2.0 / input_size)),
-          List.duplicate(0.0, hidden_size)
+          List.duplicate(0.0, hidden_size),
+          :relu
         )
 
       affine2 =
         Broca.Layers.Affine.new(
-          "a2",
           Broca.Random.randn(hidden_size, out_size)
           |> Broca.NN.mult(:math.sqrt(2.0 / hidden_size)),
-          List.duplicate(0.0, out_size)
+          List.duplicate(0.0, out_size),
+          :softmax
         )
 
       {[
          affine1,
-         %Broca.Activations.ReLU{},
-         affine2,
-         %Broca.Activations.Softmax{}
+         affine2
        ], %Broca.Losses.CrossEntropyError{}}
     end
 
@@ -86,88 +146,27 @@ defmodule Broca.Models do
       backward_model
     end
 
-    def numerical_gradient(model, loss_layer, x, t) do
-      base_func = fn name, idx1, idx2, idx3, diff ->
-        y =
-          model
-          |> Enum.reduce(x, fn layer, out ->
-            {_, res} = Layer.gradient_forward(layer, out, name, idx1, idx2, idx3, diff)
-            res
-          end)
-
-        Loss.loss(loss_layer, y, t)
-      end
-
-      [a1, r, a2, s] = model
-
-      {a1grads, a2grads} =
-        1..4
-        |> Flow.from_enumerable(max_demand: 1, stages: 4)
-        |> Flow.map(
-          &case &1 do
-            1 ->
-              {:dw1,
-               Broca.NumericalGradient.numerical_gradient(
-                 fn idx1, idx2, diff -> base_func.("a1", idx1, idx2, -1, diff) end,
-                 a1.params,
-                 :weight
-               )}
-
-            2 ->
-              {:db1,
-               Broca.NumericalGradient.numerical_gradient(
-                 fn idx, diff -> base_func.("a1", -1, -1, idx, diff) end,
-                 a1.params,
-                 :bias
-               )}
-
-            3 ->
-              {:dw2,
-               Broca.NumericalGradient.numerical_gradient(
-                 fn idx1, idx2, diff -> base_func.("a2", idx1, idx2, -1, diff) end,
-                 a2.params,
-                 :weight
-               )}
-
-            4 ->
-              {:db2,
-               Broca.NumericalGradient.numerical_gradient(
-                 fn idx, diff -> base_func.("a2", -1, -1, idx, diff) end,
-                 a2.params,
-                 :bias
-               )}
-          end
-        )
-        |> Enum.reduce({[], []}, fn {key, list}, {a1grads, a2grads} ->
-          case key do
-            :dw1 ->
-              a1grads = Keyword.put_new(a1grads, :weight, list)
-              {a1grads, a2grads}
-
-            :db1 ->
-              a1grads = Keyword.put_new(a1grads, :bias, list)
-              {a1grads, a2grads}
-
-            :dw2 ->
-              a2grads = Keyword.put_new(a2grads, :weight, list)
-              {a1grads, a2grads}
-
-            :db2 ->
-              a2grads = Keyword.put_new(a2grads, :bias, list)
-              {a1grads, a2grads}
-          end
-        end)
-
-      [%Broca.Layers.Affine{a1 | grads: a1grads}, r, %Broca.Layers.Affine{a2 | grads: a2grads}, s]
-    end
-
     def loss(model, loss_layer, x, t) do
       {_, y} = predict(model, x)
       Loss.loss(loss_layer, y, t)
     end
 
     def update(model, optimizer, learning_rate \\ 0.1) do
-      Optimizer.update(optimizer, model, learning_rate)
+      Broca.Optimizer.update(optimizer, model, learning_rate)
+    end
+  end
+
+  defmodule SimpleConvolutionNet do
+    def new(input_size, filter_size, hidden_size, output_size) do
+      {
+        [
+          Broca.Layers.Convolution.new(5, 5, filter_size, 0.01, :relu),
+          Broca.Layers.MaxPooling.new(2, 2, 2, 0),
+          Broca.Layers.Affine.new(input_size, hidden_size, :relu),
+          Broca.Layers.Affine.new(hidden_size, output_size, :softmax)
+        ],
+        %Broca.Losses.CrossEntropyError{}
+      }
     end
   end
 end

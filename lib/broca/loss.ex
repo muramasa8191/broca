@@ -4,7 +4,13 @@ defprotocol Loss do
 end
 
 defmodule Broca.Losses.CrossEntropyError do
-  defstruct val: nil
+  defstruct val: []
+
+  defimpl Inspect, for: Broca.Losses.CrossEntropyError do
+    def inspect(cross_entropy_error, _) do
+      "CrossEntropyError: val=#{Broca.NN.shape_string(cross_entropy_error.val)}"
+    end
+  end
 
   @moduledoc """
   Cross Entropy Error

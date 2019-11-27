@@ -1,6 +1,20 @@
 defmodule Broca.Activations.ReLU do
   defstruct mask: nil
 
+  def to_string(relu) do
+      "ReLU: mask=#{Broca.NN.shape_string(relu.mask)}"
+  end
+  defimpl Inspect, for: Broca.Activations.ReLU do
+    def inspect(relu, _) do
+      Broca.Activations.ReLU.to_string(relu)
+    end
+  end
+  defimpl String.Chars, for: Broca.Activations.ReLU do
+    def to_string(relu) do
+      Broca.Activations.ReLU.to_string(relu)
+    end
+  end
+
   defimpl Layer, for: Broca.Activations.ReLU do
     @doc """
     Forward
@@ -37,16 +51,8 @@ defmodule Broca.Activations.ReLU do
       layer
     end
 
-    def batch_update(layer, _) do
+    def batch_update(_, layer, _) do
       layer
-    end
-
-    def get_grads(_) do
-      []
-    end
-
-    def gradient_forward(layer, x, _, _, _, _, _) do
-      forward(layer, x)
     end
   end
 end
@@ -78,7 +84,13 @@ defmodule Broca.Activations.Sigmoid do
          [0.15728954659318548, 0.3, -0.05898357997244455, 0.20998717080701323]}
     """
     def backward(layer, dout) do
-      res = dout |> Broca.NN.mult(Broca.NN.subtract(1.0, layer.out)) |> Broca.NN.mult(layer.out)
+      res =
+        dout
+        |> Broca.NN.mult(
+          Broca.NN.subtract(1.0, layer.out)
+        )
+        |> Broca.NN.mult(layer.out)
+
       {layer, res}
     end
 
@@ -86,22 +98,30 @@ defmodule Broca.Activations.Sigmoid do
       layer
     end
 
-    def batch_update(layer, _) do
+    def batch_update(_, layer, _) do
       layer
-    end
-
-    def get_grads(_) do
-      []
-    end
-
-    def gradient_forward(layer, x, _, _, _, _, _) do
-      forward(layer, x)
     end
   end
 end
 
 defmodule Broca.Activations.Softmax do
   defstruct y: []
+
+  def to_string(softmax) do
+      "Softmax: y=#{Broca.NN.shape_string(softmax.y)}"
+  end
+
+  defimpl Inspect, for: Broca.Activations.Softmax do
+    def inspect(softmax, _) do
+      Broca.Activations.Softmax.to_string(softmax)
+    end
+  end
+
+  defimpl String.Chars, for: Broca.Activations.Softmax do
+    def to_string(softmax) do
+      Broca.Activations.Softmax.to_string(softmax)
+    end
+  end
 
   defimpl Layer, for: Broca.Activations.Softmax do
     @doc """
@@ -135,16 +155,19 @@ defmodule Broca.Activations.Softmax do
       layer
     end
 
-    def batch_update(layer, _) do
+    def batch_update(_, layer, _) do
       layer
     end
+  end
+end
 
-    def get_grads(_) do
-      []
-    end
-
-    def gradient_forward(layer, x, _, _, _, _, _) do
-      forward(layer, x)
+defmodule Broca.Activations do
+  def create(activation_type) do
+    case activation_type do
+      :relu -> %Broca.Activations.ReLU{}
+      :sigmoid -> %Broca.Activations.Sigmoid{}
+      :softmax -> %Broca.Activations.Softmax{}
+      _ -> nil
     end
   end
 end

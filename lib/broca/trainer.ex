@@ -1,19 +1,51 @@
-defprotocol Train do
-  def gradient(model, loss_layer, x, y)
-  def update(model, optimizer, learning_rate)
-  def loss(model, loss_layer, x, y)
-end
-
 defmodule Broca.Trainer do
+  def gradient({x_train, t_train}, model, loss_layer, 1) do
+    Broca.Models.TwoLayerNet.gradient(model, loss_layer, x_train, t_train)
+  end
+
+  def gradient({x_train, t_train}, model, loss_layer, parallel_size) do
+    Enum.zip(x_train, t_train)
+    |> Enum.chunk_every(div(length(x_train), parallel_size))
+    |> Flow.from_enumerable(max_demand: 1, stages: 4)
+    |> Flow.map(fn data ->
+      {x, t} = Enum.unzip(data)
+      Broca.Models.Model.gradient(model, loss_layer, x, t)
+    end)
+    |> Enum.to_list()
+  end
+
+  defp time_format(time_integer) do
+    time_string = Integer.to_string(time_integer)
+    if String.length(time_string) == 2, do: time_string, else: "0" <> time_string
+  end
+
+  defp time_string(time_seconds) do
+    hours = div(time_seconds, 3600)
+    minutes = rem(div(time_seconds, 60), 60)
+    seconds = rem(time_seconds, 60)
+
+    if hours != 0 or minutes != 0 do
+      "#{time_format(hours)}:#{time_format(minutes)}:#{time_format(seconds)}"
+    else
+      "#{seconds}s"
+    end
+  end
+
+  defp choose_random_data(x_train, t_train, batch_size) do
+    Enum.zip(x_train, t_train)
+    |> Enum.take_random(batch_size)
+    |> Enum.unzip()
+  end
+
   def train(
         model,
         loss_layer,
-        optimizer,
-        {x_train, t_train},
+        optimizer_type,
+        {x_train, t_train} = _train_data,
         epochs,
         batch_size,
         learning_rate,
-        parallelize \\ False,
+        parallel \\ 1,
         test_data \\ nil
       ) do
     data_size = length(x_train)
@@ -29,89 +61,87 @@ defmodule Broca.Trainer do
     iterate = round(data_size / batch_size) |> max(1)
 
     1..epochs
-    |> Enum.reduce({model, optimizer}, fn epoch, {e_model, e_optimizer} ->
+    |> Enum.reduce({model, Broca.Optimizers.create(optimizer_type, model)}, fn epoch,
+                                                                               {e_model,
+                                                                                e_optimizer} ->
       IO.puts("Epoch #{epoch}/#{epochs}")
-      s = NaiveDateTime.utc_now()
+      s = System.os_time(:second)
 
-      {epoch_model, epoch_optimizer} =
-        1..iterate
-        |> Enum.reduce({e_model, e_optimizer}, fn i, {loop_model, loop_optimizer} ->
-          if i == 1, do: IO.puts("0/#{iterate} [                    ]")
+      1..iterate
+      |> Enum.reduce({e_model, e_optimizer}, fn i, {loop_model, loop_optimizer} ->
+        if i == 1, do: IO.puts("0/#{iterate} [                    ]")
 
-          {x_batch, t_batch} =
-            Enum.zip(x_train, t_train)
-            |> Enum.take_random(batch_size)
-            |> Enum.unzip()
+        batch_data = choose_random_data(x_train, t_train, batch_size)
 
-          grad_model =
-            if parallelize == False do
-              Broca.Models.TwoLayerNet.gradient(loop_model, loss_layer, x_batch, t_batch)
-            else
-              Broca.Trainer.parallel_gradient(loop_model, loss_layer, x_batch, t_batch)
-            end
+        {updated_model, updated_optimizer} =
+          batch_data
+          |> gradient(loop_model, loss_layer, parallel)
+          |> Broca.Models.Model.update(loop_optimizer, learning_rate)
 
-          {updated_model, updated_optimizer} =
-            Broca.Models.TwoLayerNet.update(grad_model, loop_optimizer, learning_rate)
+        [train_loss, accuracy] =
+          Broca.Models.Model.loss_and_accuracy(updated_model, loss_layer, batch_data, div(batch_size, parallel))
 
-          loss = Broca.Models.TwoLayerNet.loss(updated_model, loss_layer, x_batch, t_batch)
+        if i != iterate do
+          rest = div(System.os_time(:second) - s, i) * (iterate - i)
 
-          progress = floor(i / iterate * 20)
-          e = NaiveDateTime.utc_now()
+          Broca.Trainer.display_result(
+            train_loss,
+            accuracy,
+            iterate,
+            i,
+            floor(i / iterate * 20),
+            rest
+          )
+        else
+          Broca.Trainer.display_result(
+            train_loss,
+            accuracy,
+            iterate,
+            i,
+            floor(i / iterate * 20),
+            System.os_time(:second) - s,
+            updated_model,
+            loss_layer,
+            test_data
+          )
+        end
 
-          if i != iterate do
-            IO.puts(
-              "\e[1A#{i}/#{iterate} [#{
-                if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
-              }#{List.to_string(for _ <- 1..(20 - progress), do: " ")}] - loss: #{
-                Float.floor(loss, 5)
-              } - #{NaiveDateTime.diff(e, s, :millisecond) / 1000} sec          "
-            )
-          else
-            acc = Broca.Models.TwoLayerNet.accuracy(updated_model, x_batch, t_batch)
-
-            if is_nil(test_data) do
-              IO.puts(
-                "\e[1A#{i}/#{iterate} [#{
-                  if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
-                }] - loss: #{Float.floor(loss, 5)} - acc: #{Float.floor(acc, 5)} - #{
-                  NaiveDateTime.diff(e, s, :millisecond) / 1000
-                } sec"
-              )
-            else
-              {x_test, t_test} = test_data
-              test_acc = Broca.Models.TwoLayerNet.accuracy(updated_model, x_test, t_test)
-              test_loss = Broca.Models.TwoLayerNet.loss(updated_model, loss_layer, x_test, t_test)
-
-              IO.puts(
-                "\e[1A#{i}/#{iterate} [#{
-                  if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
-                }] - loss: #{Float.floor(loss, 5)} - acc: #{Float.floor(acc, 5)} - test_loss: #{
-                  Float.floor(test_loss, 5)
-                } - test_acc: #{Float.floor(test_acc, 5)} - #{
-                  NaiveDateTime.diff(e, s, :millisecond) / 1000
-                } sec"
-              )
-            end
-          end
-
-          {updated_model, updated_optimizer}
-        end)
-
-      {epoch_model, epoch_optimizer}
+        {updated_model, updated_optimizer}
+      end)
     end)
   end
 
-  def parallel_gradient(model, loss_layer, x_train, t_train) do
-    Enum.zip(x_train, t_train)
-    |> Flow.from_enumerable(max_demand: 1, stages: 4)
-    |> Flow.map(fn {x, t} -> Broca.Models.TwoLayerNet.gradient(model, loss_layer, x, t) end)
-    |> Enum.to_list()
-    |> Enum.reduce(
-      model,
-      fn result_model, layers ->
-        Enum.zip(layers, result_model)
-        |> Enum.map(fn {layer, r} -> Layer.batch_update(layer, r) end)
-      end
+  def display_result(loss, accuracy, iterate, i, progress, rest) do
+    IO.puts(
+      "\e[1A#{i}/#{iterate} [#{
+        if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
+      }#{List.to_string(for _ <- 1..(20 - progress), do: " ")}] - ETA: #{time_string(rest)} - loss: #{
+        Float.floor(loss, 5)
+      } - acc: #{Float.floor(accuracy, 5)}                          "
+    )
+  end
+
+  def display_result(loss, accuracy, iterate, i, progress, duration, _, _, nil) do
+    IO.puts(
+      "\e[1A#{i}/#{iterate} [#{
+        if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
+      }] - #{duration}s - loss: #{
+        Float.floor(loss, 5)
+      } - acc: #{Float.floor(accuracy, 5)}"
+    )
+  end
+
+  def display_result(loss, accuracy, iterate, i, progress, duration, model, loss_layer, test_data) do
+    [test_loss, test_acc] = Broca.Models.Model.loss_and_accuracy(model, loss_layer, test_data, 20)
+
+    IO.puts(
+      "\e[1A#{i}/#{iterate} [#{
+        if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
+      }] - #{duration}s - loss: #{
+        Float.floor(loss, 5)
+      } - acc: #{Float.floor(accuracy, 5)} - val_loss: #{Float.floor(test_loss, 5)} - val_acc: #{
+        Float.floor(test_acc, 5)
+      }"
     )
   end
 end
