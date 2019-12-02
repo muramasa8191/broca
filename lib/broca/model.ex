@@ -51,6 +51,7 @@ defmodule Broca.Models do
       |> Flow.map(fn chunk ->
         {x_chunk, t_chunk} = Enum.unzip(chunk)
         {_, y} = forward(model, x_chunk)
+
         [
           Loss.loss(loss_layer, y, t_chunk) * chunk_amount,
           Enum.zip(Broca.NN.argmax(y), Broca.NN.argmax(t_chunk))
@@ -160,7 +161,7 @@ defmodule Broca.Models do
     def new(input_size, filter_size, hidden_size, output_size) do
       {
         [
-          Broca.Layers.Convolution.new(5, 5, filter_size, 0.01, :relu),
+          Broca.Layers.Convolution.new(5, 5, 1, filter_size, 0.01, :relu),
           Broca.Layers.MaxPooling.new(2, 2, 2, 0),
           Broca.Layers.Affine.new(input_size, hidden_size, :relu),
           Broca.Layers.Affine.new(hidden_size, output_size, :softmax)

@@ -79,7 +79,12 @@ defmodule Broca.Trainer do
           |> Broca.Models.Model.update(loop_optimizer, learning_rate)
 
         [train_loss, accuracy] =
-          Broca.Models.Model.loss_and_accuracy(updated_model, loss_layer, batch_data, div(batch_size, parallel))
+          Broca.Models.Model.loss_and_accuracy(
+            updated_model,
+            loss_layer,
+            batch_data,
+            div(batch_size, parallel)
+          )
 
         if i != iterate do
           rest = div(System.os_time(:second) - s, i) * (iterate - i)
@@ -125,9 +130,7 @@ defmodule Broca.Trainer do
     IO.puts(
       "\e[1A#{i}/#{iterate} [#{
         if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
-      }] - #{duration}s - loss: #{
-        Float.floor(loss, 5)
-      } - acc: #{Float.floor(accuracy, 5)}"
+      }] - #{duration}s - loss: #{Float.floor(loss, 5)} - acc: #{Float.floor(accuracy, 5)}"
     )
   end
 
@@ -137,11 +140,9 @@ defmodule Broca.Trainer do
     IO.puts(
       "\e[1A#{i}/#{iterate} [#{
         if progress != 0, do: List.to_string(for _ <- 1..progress, do: "=")
-      }] - #{duration}s - loss: #{
-        Float.floor(loss, 5)
-      } - acc: #{Float.floor(accuracy, 5)} - val_loss: #{Float.floor(test_loss, 5)} - val_acc: #{
-        Float.floor(test_acc, 5)
-      }"
+      }] - #{duration}s - loss: #{Float.floor(loss, 5)} - acc: #{Float.floor(accuracy, 5)} - val_loss: #{
+        Float.floor(test_loss, 5)
+      } - val_acc: #{Float.floor(test_acc, 5)}"
     )
   end
 end

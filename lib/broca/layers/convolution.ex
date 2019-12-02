@@ -15,12 +15,21 @@ defmodule Broca.Layers.Convolution do
   @doc """
   Helper function to create Convolution
   """
-  def new(height, width, filter_size, weight_init_std \\ 0.01, activation_type \\ nil) do
+  def new(
+        height,
+        width,
+        input_channel_size,
+        filter_size,
+        weight_init_std \\ 0.01,
+        activation_type \\ nil
+      ) do
     %Broca.Layers.Convolution{
       filter_height: height,
       filter_width: width,
       params: [
-        weight: Broca.Random.randn(filter_size, width * height) |> Broca.NN.mult(weight_init_std),
+        weight:
+          Broca.Random.randn(filter_size, input_channel_size * width * height)
+          |> Broca.NN.mult(weight_init_std),
         bias: List.duplicate(0.0, filter_size)
       ],
       activation: Broca.Activations.create(activation_type)
@@ -56,9 +65,7 @@ defmodule Broca.Layers.Convolution do
           )
           |> String.trim_trailing(",")
         }], " <>
-        "col=#{Broca.NN.shape_string(conv.col)}, activation=#{
-          conv.activation
-        }"
+        "col=#{Broca.NN.shape_string(conv.col)}, activation=#{conv.activation}"
     end
   end
 
@@ -72,12 +79,12 @@ defmodule Broca.Layers.Convolution do
       iex> conv = %Broca.Layers.Convolution{filter_height: 3, filter_width: 3, params: [weight: [[1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2]], bias: [0, 0]]}
       iex> Layer.forward(conv, input)
       {%Broca.Layers.Convolution{filter_height: 3, filter_width: 3, params: [weight: [[1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2]], bias: [0, 0]],
-        col: [[[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
+        col: [[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
        [[6, 7, 8, 11, 12, 13, 16, 17, 18], [7, 8, 9, 12, 13, 14, 17, 18, 19], [8, 9, 10, 13, 14, 15, 18, 19, 20]],
-       [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]],
-       [[[[26, 27, 28, 31, 32, 33, 36, 37, 38], [27, 28, 29, 32, 33, 34, 37, 38, 39], [28, 29, 30, 33, 34, 35, 38, 39, 40]],
+       [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]],
+      [[[26, 27, 28, 31, 32, 33, 36, 37, 38], [27, 28, 29, 32, 33, 34, 37, 38, 39], [28, 29, 30, 33, 34, 35, 38, 39, 40]],
        [[31, 32, 33, 36, 37, 38, 41, 42, 43], [32, 33, 34, 37, 38, 39, 42, 43, 44], [33, 34, 35, 38, 39, 40, 43, 44, 45]],
-       [[36, 37, 38, 41, 42, 43, 46, 47, 48], [37, 38, 39, 42, 43, 44, 47, 48, 49], [38, 39, 40, 43, 44, 45, 48, 49, 50]]]]]},
+       [[36, 37, 38, 41, 42, 43, 46, 47, 48], [37, 38, 39, 42, 43, 44, 47, 48, 49], [38, 39, 40, 43, 44, 45, 48, 49, 50]]]]},
       [[[[ 63,  72,  81], [108, 117, 126], [153, 162, 171]], [[126, 144, 162], [216, 234, 252], [306, 324, 342]]],
        [[[288, 297, 306], [333, 342, 351], [378, 387, 396]], [[576, 594, 612], [666, 684, 702], [756, 774, 792]]]]}
 
@@ -86,12 +93,12 @@ defmodule Broca.Layers.Convolution do
       iex> conv = %Broca.Layers.Convolution{filter_height: 3, filter_width: 3, params: [weight: [[1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2]], bias: [1, 2]]}
       iex> Layer.forward(conv, input)
       {%Broca.Layers.Convolution{filter_height: 3, filter_width: 3, params: [weight: [[1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2]], bias: [1, 2]],
-        col: [[[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
+        col: [[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
        [[6, 7, 8, 11, 12, 13, 16, 17, 18], [7, 8, 9, 12, 13, 14, 17, 18, 19], [8, 9, 10, 13, 14, 15, 18, 19, 20]],
-       [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]],
-       [[[[26, 27, 28, 31, 32, 33, 36, 37, 38], [27, 28, 29, 32, 33, 34, 37, 38, 39], [28, 29, 30, 33, 34, 35, 38, 39, 40]],
+       [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]],
+      [[[26, 27, 28, 31, 32, 33, 36, 37, 38], [27, 28, 29, 32, 33, 34, 37, 38, 39], [28, 29, 30, 33, 34, 35, 38, 39, 40]],
        [[31, 32, 33, 36, 37, 38, 41, 42, 43], [32, 33, 34, 37, 38, 39, 42, 43, 44], [33, 34, 35, 38, 39, 40, 43, 44, 45]],
-       [[36, 37, 38, 41, 42, 43, 46, 47, 48], [37, 38, 39, 42, 43, 44, 47, 48, 49], [38, 39, 40, 43, 44, 45, 48, 49, 50]]]]]},
+       [[36, 37, 38, 41, 42, 43, 46, 47, 48], [37, 38, 39, 42, 43, 44, 47, 48, 49], [38, 39, 40, 43, 44, 45, 48, 49, 50]]]]},
       [[[[ 64,  73,  82], [109, 118, 127], [154, 163, 172]], [[128, 146, 164], [218, 236, 254], [308, 326, 344]]],
        [[[289, 298, 307], [334, 343, 352], [379, 388, 397]], [[578, 596, 614], [668, 686, 704], [758, 776, 794]]]]}
     """
@@ -110,12 +117,10 @@ defmodule Broca.Layers.Convolution do
         |> Enum.map(fn batch ->
           Enum.map(batch, fn channel ->
             Enum.map(channel, fn data ->
-              Enum.map(data, fn col ->
-                col
-                |> Broca.NN.mult(layer.params[:weight])
-                |> Broca.NN.sum(:row)
-                |> Broca.NN.add(layer.params[:bias])
-              end)
+              data
+              |> Broca.NN.mult(layer.params[:weight])
+              |> Broca.NN.sum(:row)
+              |> Broca.NN.add(layer.params[:bias])
             end)
           end)
         end)
@@ -152,12 +157,12 @@ defmodule Broca.Layers.Convolution do
         iex> dout = [[[[0.0, 0.0, 0.0], [0.0, 0.1, 0.2], [0.0, 0.3, 0.4]], [[0.0, 0.0, 0.0], [0.0, 0.5, 0.6], [0.0, 0.7, 0.8]]], \
         [[[0.0, 0.0, 0.0], [0.0, 0.9, 1.0], [0.0, 1.1, 1.2]], [[0.0, 0.0, 0.0], [0.0, 1.3, 1.4], [0.0, 1.5, 1.6]]]]
         iex> conv = %Broca.Layers.Convolution{filter_height: 3, filter_width: 3, params: [weight: [[1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2]], bias: [0, 0]], \
-        col: [[[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]], \
-        [[6, 7, 8, 11, 12, 13, 16, 17, 18], [7, 8, 9, 12, 13, 14, 17, 18, 19], [8, 9, 10, 13, 14, 15, 18, 19, 20]], \
-        [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]], \
-        [[[[26, 27, 28, 31, 32, 33, 36, 37, 38], [27, 28, 29, 32, 33, 34, 37, 38, 39], [28, 29, 30, 33, 34, 35, 38, 39, 40]], \
-        [[31, 32, 33, 36, 37, 38, 41, 42, 43], [32, 33, 34, 37, 38, 39, 42, 43, 44], [33, 34, 35, 38, 39, 40, 43, 44, 45]], \
-        [[36, 37, 38, 41, 42, 43, 46, 47, 48], [37, 38, 39, 42, 43, 44, 47, 48, 49], [38, 39, 40, 43, 44, 45, 48, 49, 50]]]]]}
+        col: [[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]], \
+       [[6, 7, 8, 11, 12, 13, 16, 17, 18], [7, 8, 9, 12, 13, 14, 17, 18, 19], [8, 9, 10, 13, 14, 15, 18, 19, 20]], \
+       [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]], \
+      [[[26, 27, 28, 31, 32, 33, 36, 37, 38], [27, 28, 29, 32, 33, 34, 37, 38, 39], [28, 29, 30, 33, 34, 35, 38, 39, 40]], \
+       [[31, 32, 33, 36, 37, 38, 41, 42, 43], [32, 33, 34, 37, 38, 39, 42, 43, 44], [33, 34, 35, 38, 39, 40, 43, 44, 45]], \
+       [[36, 37, 38, 41, 42, 43, 46, 47, 48], [37, 38, 39, 42, 43, 44, 47, 48, 49], [38, 39, 40, 43, 44, 45, 48, 49, 50]]]]}
         iex> Layer.backward(conv, dout)
         {
           %Broca.Layers.Convolution{filter_height: 3, filter_width: 3, params: [weight: [[1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2]], bias: [0, 0]], 
@@ -191,7 +196,7 @@ defmodule Broca.Layers.Convolution do
         |> Enum.map(fn {col, channel} ->
           channel
           |> Enum.map(fn data ->
-            Enum.zip(hd(col), data)
+            Enum.zip(col, data)
             |> Enum.map(fn {col2, row} ->
               Enum.zip(col2, row)
               |> Enum.map(fn {col3, val} ->
@@ -279,7 +284,12 @@ defmodule Broca.Layers.Convolution do
           ]
         end)
 
-      {%Broca.Layers.Convolution{layer | grads: [weight: dw, bias: db], col: nil, activation: activation}, dx}
+      {%Broca.Layers.Convolution{
+         layer
+         | grads: [weight: dw, bias: db],
+           col: nil,
+           activation: activation
+       }, dx}
     end
 
     def update(layer, optimize_func) do

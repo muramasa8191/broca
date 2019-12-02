@@ -30,14 +30,16 @@ defmodule Broca.Optimizers.SGD do
         |> Enum.map(
           &Layer.batch_update(elem(&1, 0), elem(&1, 1), fn params, grads ->
             Keyword.keys(grads)
-            |> Enum.reduce([],
+            |> Enum.reduce(
+              [],
               fn key, keyword ->
                 Keyword.put_new(
                   keyword,
                   key,
                   Broca.Optimizers.SGD.update_param(params[key], grads[key], learning_rate)
                 )
-              end)
+              end
+            )
           end)
         )
 

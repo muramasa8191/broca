@@ -64,7 +64,7 @@ defmodule Broca.Dataset do
 
     defp normalize_data(img_binary, normalize) do
       if normalize do
-        Enum.map(:erlang.binary_to_list(img_binary),&(&1 / 255.0))
+        Enum.map(:erlang.binary_to_list(img_binary), &(&1 / 255.0))
       else
         :erlang.binary_to_list(img_binary)
       end
@@ -81,7 +81,7 @@ defmodule Broca.Dataset do
               |> Enum.reduce({[], rest}, fn _, {list, raws} ->
                 <<img::binary-size(cols), raws::binary>> = raws
 
-                {[normalize_data(img, normalize)]++list, raws}
+                {[normalize_data(img, normalize)] ++ list, raws}
               end)
 
             {[[Enum.reverse(image)]] ++ acc, rest}
@@ -113,15 +113,25 @@ defmodule Broca.Dataset.CIFAR10 do
 
   def load_train_data(normalize \\ true, is_one_hot \\ true) do
     5..1
-    |> Enum.reduce([],
+    |> Enum.reduce(
+      [],
       fn idx, list ->
-        [parse(
-          File.read!(
-            Application.app_dir(:broca, "priv/" <> String.replace(@train_data, "?", Integer.to_string(idx)))
-          ),
-           10000, normalize, is_one_hot)] ++ list
-      end)
-    |> Enum.unzip
+        [
+          parse(
+            File.read!(
+              Application.app_dir(
+                :broca,
+                "priv/" <> String.replace(@train_data, "?", Integer.to_string(idx))
+              )
+            ),
+            10000,
+            normalize,
+            is_one_hot
+          )
+        ] ++ list
+      end
+    )
+    |> Enum.unzip()
   end
 
   def load_test_data(normalize \\ true, is_one_hot \\ true) do
@@ -131,7 +141,7 @@ defmodule Broca.Dataset.CIFAR10 do
       normalize,
       is_one_hot
     )
-    |> Enum.unzip
+    |> Enum.unzip()
   end
 
   defp color_normalize(color, normalize) do
@@ -144,28 +154,27 @@ defmodule Broca.Dataset.CIFAR10 do
 
   defp parse(raw, size, normalize, is_one_hot) do
     1..size
-    |> Enum.reduce({[], raw},
+    |> Enum.reduce(
+      {[], raw},
       fn idx, {acc, bin} ->
-        <<class::unsigned-8, 
-          red::binary-size(1024),
-          green::binary-size(1024),
-          blue::binary-size(1024),
-          rest::binary>> = bin
+        <<class::unsigned-8, red::binary-size(1024), green::binary-size(1024),
+          blue::binary-size(1024), rest::binary>> = bin
 
         red = color_normalize(red, normalize)
         green = color_normalize(green, normalize)
         blue = color_normalize(blue, normalize)
-        
-        {[{
-          [red, green, blue,],
-          (if is_one_hot, do: Broca.NN.one_hot(class, 9), else: class)
-          }] ++ acc,
-          rest
-        }
+
+        {[
+           {
+             [red, green, blue],
+             if(is_one_hot, do: Broca.NN.one_hot(class, 9), else: class)
+           }
+         ] ++ acc, rest}
+
         # rgb =
         #   Enum.zip(:erlang.binary_to_list(red), :erlang.binary_to_list(green))
         #   |> Enum.zip(:erlang.binary_to_list(blue))
-        
+
         # {image, _} =
         #   1..32
         #   |> Enum.reduce({[], rgb},
@@ -187,7 +196,8 @@ defmodule Broca.Dataset.CIFAR10 do
         #   [{Enum.reverse(image), (if is_one_hot == True, do: Broca.NN.one_hot(class, 9), else: class)}] ++ acc,
         #   rest
         # }
-      end)
+      end
+    )
     |> elem(0)
   end
 end

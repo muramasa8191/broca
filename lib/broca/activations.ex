@@ -2,13 +2,15 @@ defmodule Broca.Activations.ReLU do
   defstruct mask: nil
 
   def to_string(relu) do
-      "ReLU: mask=#{Broca.NN.shape_string(relu.mask)}"
+    "ReLU: mask=#{Broca.NN.shape_string(relu.mask)}"
   end
+
   defimpl Inspect, for: Broca.Activations.ReLU do
     def inspect(relu, _) do
       Broca.Activations.ReLU.to_string(relu)
     end
   end
+
   defimpl String.Chars, for: Broca.Activations.ReLU do
     def to_string(relu) do
       Broca.Activations.ReLU.to_string(relu)
@@ -86,9 +88,7 @@ defmodule Broca.Activations.Sigmoid do
     def backward(layer, dout) do
       res =
         dout
-        |> Broca.NN.mult(
-          Broca.NN.subtract(1.0, layer.out)
-        )
+        |> Broca.NN.mult(Broca.NN.subtract(1.0, layer.out))
         |> Broca.NN.mult(layer.out)
 
       {layer, res}
@@ -108,7 +108,7 @@ defmodule Broca.Activations.Softmax do
   defstruct y: []
 
   def to_string(softmax) do
-      "Softmax: y=#{Broca.NN.shape_string(softmax.y)}"
+    "Softmax: y=#{Broca.NN.shape_string(softmax.y)}"
   end
 
   defimpl Inspect, for: Broca.Activations.Softmax do

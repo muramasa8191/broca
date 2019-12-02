@@ -20,6 +20,4 @@ defmodule BrocaTest do
   doctest Broca.Optimizers.AdaGrad
   doctest Broca.Layers.Convolution
   doctest Broca.Optimizer.Broca.Optimizers.AdaGrad
-
-  doctest Broca.NumericalGradient
 end
