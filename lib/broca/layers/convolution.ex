@@ -20,12 +20,16 @@ defmodule Broca.Layers.Convolution do
         width,
         input_channel_size,
         filter_size,
-        weight_init_std \\ 0.01,
-        activation_type \\ nil
+        stride,
+        padding,
+        activation_type \\ nil,
+        weight_init_std \\ 0.01
       ) do
     %Broca.Layers.Convolution{
       filter_height: height,
       filter_width: width,
+      stride: stride,
+      padding: padding,
       params: [
         weight:
           Broca.Random.randn(filter_size, input_channel_size * width * height)
@@ -192,16 +196,12 @@ defmodule Broca.Layers.Convolution do
         )
 
       dw =
-        Enum.zip(layer.col, dout)
-        |> Enum.map(fn {col, channel} ->
-          channel
-          |> Enum.map(fn data ->
+        Enum.map(Enum.zip(layer.col, dout), fn {col, channel} ->
+          Enum.map(channel, fn data ->
             Enum.zip(col, data)
             |> Enum.map(fn {col2, row} ->
-              Enum.zip(col2, row)
-              |> Enum.map(fn {col3, val} ->
-                col3
-                |> Enum.map(&(&1 * val))
+              Enum.map(Enum.zip(col2, row), fn {col3, val} ->
+                Enum.map(col3, &(&1 * val))
               end)
               |> Enum.reduce(
                 List.duplicate(0.0, layer.filter_height * layer.filter_width),
@@ -226,8 +226,7 @@ defmodule Broca.Layers.Convolution do
         )
 
       dx =
-        dout
-        |> Enum.map(fn channel ->
+        Enum.map(dout, fn channel ->
           channel_map =
             Enum.zip(layer.params[:weight], channel)
             |> Enum.reduce(

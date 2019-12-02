@@ -116,19 +116,20 @@ defmodule Broca.Dataset.CIFAR10 do
     |> Enum.reduce(
       [],
       fn idx, list ->
-        [
-          parse(
-            File.read!(
-              Application.app_dir(
-                :broca,
-                "priv/" <> String.replace(@train_data, "?", Integer.to_string(idx))
-              )
-            ),
-            10000,
-            normalize,
-            is_one_hot
-          )
-        ] ++ list
+        # [
+        # ]
+        parse(
+          File.read!(
+            Application.app_dir(
+              :broca,
+              "priv/" <> String.replace(@train_data, "?", Integer.to_string(idx))
+            )
+          ),
+          10000,
+          normalize,
+          is_one_hot
+        ) ++
+          list
       end
     )
     |> Enum.unzip()
@@ -156,7 +157,7 @@ defmodule Broca.Dataset.CIFAR10 do
     1..size
     |> Enum.reduce(
       {[], raw},
-      fn idx, {acc, bin} ->
+      fn _, {acc, bin} ->
         <<class::unsigned-8, red::binary-size(1024), green::binary-size(1024),
           blue::binary-size(1024), rest::binary>> = bin
 

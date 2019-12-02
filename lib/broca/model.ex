@@ -161,7 +161,7 @@ defmodule Broca.Models do
     def new(input_size, filter_size, hidden_size, output_size) do
       {
         [
-          Broca.Layers.Convolution.new(5, 5, 1, filter_size, 0.01, :relu),
+          Broca.Layers.Convolution.new(5, 5, 1, filter_size, 1, 0, :relu),
           Broca.Layers.MaxPooling.new(2, 2, 2, 0),
           Broca.Layers.Affine.new(input_size, hidden_size, :relu),
           Broca.Layers.Affine.new(hidden_size, output_size, :softmax)

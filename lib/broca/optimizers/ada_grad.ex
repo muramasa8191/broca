@@ -9,7 +9,7 @@ defmodule Broca.Optimizers.AdaGrad do
       iex> Broca.Optimizer.init(%Broca.Optimizers.AdaGrad{}, [%Broca.Layers.Affine{params: [bias: [5, 6], weight: [[1, 2], [3, 4]]]}, \
           %Broca.Activations.ReLU{}, %Broca.Layers.Affine{params: [bias: [8, 9, 10], weight: [[1, 2, 3], [4, 5, 6]]]}, \
           %Broca.Activations.Softmax{}])
-      %Broca.Optimizers.AdaGrad{h: [[weight: [[0.0, 0.0], [0.0, 0.0]], bias: [0.0, 0.0]], [], [weight: [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], bias: [0.0, 0.0, 0.0]], []], init: True}
+      %Broca.Optimizers.AdaGrad{h: [[weight: [[0.0, 0.0], [0.0, 0.0]], bias: [0.0, 0.0]], [], [weight: [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], bias: [0.0, 0.0, 0.0]], []], init: true}
     """
     def init(_, model) do
       h =
@@ -26,7 +26,7 @@ defmodule Broca.Optimizers.AdaGrad do
           end
         end)
 
-      %Broca.Optimizers.AdaGrad{h: h, init: True}
+      %Broca.Optimizers.AdaGrad{h: h, init: true}
     end
 
     def update(optimizer, model, learning_rate) do
@@ -58,7 +58,7 @@ defmodule Broca.Optimizers.AdaGrad do
           end)
         end)
 
-      {updated_model, %Broca.Optimizers.AdaGrad{init: True, h: h}}
+      {updated_model, %Broca.Optimizers.AdaGrad{init: true, h: h}}
     end
 
     def batch_update(optimizer, model1, model2, learning_rate, _) do
@@ -107,7 +107,7 @@ defmodule Broca.Optimizers.AdaGrad do
           end)
         end)
 
-      {updated_model, %Broca.Optimizers.AdaGrad{init: True, h: h}}
+      {updated_model, %Broca.Optimizers.AdaGrad{init: true, h: h}}
     end
   end
 

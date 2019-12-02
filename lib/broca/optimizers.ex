@@ -5,7 +5,7 @@ defprotocol Broca.Optimizer do
 end
 
 defmodule Broca.Optimizers.SGD do
-  defstruct init: True
+  defstruct init: true
 
   defimpl Broca.Optimizer, for: Broca.Optimizers.SGD do
     def init(_, _) do
