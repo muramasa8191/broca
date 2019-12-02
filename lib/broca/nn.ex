@@ -154,20 +154,20 @@ defmodule Broca.NN do
   defguard is_3dlist(list) when is_list(hd(hd(list))) and not is_list(hd(hd(hd(list))))
   defguard is_4dlist(list) when is_list(hd(hd(hd(list))))
 
-  defp _concat(list1, list2, merge \\ True)
+  defp _concat(list1, list2, merge \\ true)
 
   defp _concat(list, nil, _) do
     list
   end
 
-  defp _concat(list1, list2, True) when is_list(hd(list1)) do
+  defp _concat(list1, list2, true) when is_list(hd(list1)) do
     Enum.zip(list1, list2)
-    |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, True) end)
+    |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, true) end)
   end
 
-  defp _concat(list1, list2, False) when is_list(hd(hd(list1))) do
+  defp _concat(list1, list2, false) when is_list(hd(hd(list1))) do
     Enum.zip(list1, list2)
-    |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, False) end)
+    |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, false) end)
   end
 
   defp _concat(list1, list2, _) do
@@ -217,7 +217,7 @@ defmodule Broca.NN do
       end)
       |> Enum.reduce(
         nil,
-        fn channel, acc -> _concat(channel, acc, False) end
+        fn channel, acc -> _concat(channel, acc, false) end
       )
     end)
     |> Enum.reduce(
@@ -568,10 +568,10 @@ defmodule Broca.NN do
 
   ## Examples
       iex> Broca.NN.filter_mask([-1.0, 0.2, 1.0, -0.3], fn x -> x <= 0 end)
-      [True, False, False, True]
+      [true, false, false, true]
 
       iex> Broca.NN.filter_mask([[-1.0, 0.2, 1.0, -0.3], [-1.0, 0.2, 1.0, -0.3]], fn x -> x <= 0 end)
-      [[True, False, False, True], [True, False, False, True]]
+      [[true, false, false, true], [true, false, false, true]]
   """
   def filter_mask(list, filter) when is_list(hd(list)) do
     list
@@ -580,20 +580,20 @@ defmodule Broca.NN do
 
   def filter_mask(list, filter) do
     list
-    |> Enum.map(&if filter.(&1), do: True, else: False)
+    |> Enum.map(&if filter.(&1), do: true, else: false)
   end
 
   @doc """
-  Mask the data. The `value` is replaced by the `replaced_value` if `filter` is `True`
+  Mask the data. The `value` is replaced by the `replaced_value` if `filter` is `true`
 
   ## Examples
-      iex> Broca.NN.mask(True, 4.0)
+      iex> Broca.NN.mask(true, 4.0)
       0.0
 
-      iex> Broca.NN.mask(False, 4, 0)
+      iex> Broca.NN.mask(false, 4, 0)
       4
 
-      iex> Broca.NN.mask([True, False, True], [1, 2, 4], -1.0)
+      iex> Broca.NN.mask([true, false, true], [1, 2, 4], -1.0)
       [-1.0, 2, -1.0]
   """
   def mask(filter, values) do
@@ -605,7 +605,7 @@ defmodule Broca.NN do
     |> Enum.map(fn {f, v} -> mask(f, v, replace_value) end)
   end
 
-  def mask(filter, _, replace_value) when filter == True do
+  def mask(filter, _, replace_value) when filter do
     replace_value
   end
 

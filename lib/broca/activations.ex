@@ -23,7 +23,7 @@ defmodule Broca.Activations.ReLU do
 
     ## Examples
         iex> Layer.forward(%Broca.Activations.ReLU{}, [-1.0, 2.0, 3.0, -4.0])
-        {%Broca.Activations.ReLU{mask: [True, False, False, True]}, [0.0, 2.0, 3.0, 0.0]}
+        {%Broca.Activations.ReLU{mask: [true, false, false, true]}, [0.0, 2.0, 3.0, 0.0]}
     """
     def forward(_, x) do
       mask = x |> Broca.NN.filter_mask(fn val -> val <= 0.0 end)
@@ -35,10 +35,10 @@ defmodule Broca.Activations.ReLU do
     Backward
 
     ## Examples
-        iex> Layer.backward(%Broca.Activations.ReLU{mask: [True, False, False, True]}, [100.0, 20.0, 30.0, 24.0])
+        iex> Layer.backward(%Broca.Activations.ReLU{mask: [true, false, false, true]}, [100.0, 20.0, 30.0, 24.0])
         {%Broca.Activations.ReLU{mask: nil}, [0.0, 20.0, 30.0, 0.0]}
 
-        iex> Layer.backward(%Broca.Activations.ReLU{mask: [[True, False, False, True], [True, False, False, True]]}, [[100.0, 20.0, 30.0, 24.0], [100.0, 20.0, 30.0, 24.0]])
+        iex> Layer.backward(%Broca.Activations.ReLU{mask: [[true, false, false, true], [true, false, false, true]]}, [[100.0, 20.0, 30.0, 24.0], [100.0, 20.0, 30.0, 24.0]])
         {%Broca.Activations.ReLU{mask: nil}, [[0.0, 20.0, 30.0, 0.0], [0.0, 20.0, 30.0, 0.0]]}
     """
     def backward(layer, dout) do
