@@ -10,9 +10,9 @@ defmodule Broca.Optimizers.Adam do
   end
 
   defimpl Broca.Optimizer, for: Broca.Optimizers.Adam do
-    def init(optimizer, model) do
+    def init(optimizer, layers) do
       mv =
-        model
+        layers
         |> Enum.map(fn layer ->
           if Map.has_key?(layer, :params) do
             Keyword.keys(layer.params)

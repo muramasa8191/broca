@@ -1,5 +1,5 @@
 defprotocol Broca.Optimizer do
-  def init(optimizer, model)
+  def init(optimizer, layers)
   def update(optimizer, model, learning_rate)
   def batch_update(optimizer, model1, model2, learning_rate, cnt)
 end
@@ -70,11 +70,19 @@ defmodule Broca.Optimizers.SGD do
 end
 
 defmodule Broca.Optimizers do
+  @moduledoc """
+  Optimizer Common Function Module
+  """
+
+  @doc """
+  Optimizer Factory
+
+  """
   def create(type, model) do
     case type do
       :adam -> Broca.Optimizer.init(%Broca.Optimizers.Adam{}, model)
       :adaGrad -> Broca.Optimizer.init(%Broca.Optimizers.AdaGrad{}, model)
-      _ -> Broca.Optimizer.init(%Broca.Optimizers.SGD{}, model)
+      true -> Broca.Optimizer.init(%Broca.Optimizers.SGD{}, model)
     end
   end
 end

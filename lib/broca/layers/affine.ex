@@ -62,6 +62,7 @@ defmodule Broca.Layers.Affine do
         {%Broca.Layers.Affine{params: [weight: [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], bias: [0.9, 0.6, 0.3]], x: [-0.12690894,  0.31470161], x_shape: [2]}, [1.01318975, 0.7319690169999999, 0.450748284]}
     """
     def forward(layer, x) do
+      s = System.os_time(:millisecond)
       shape = Broca.NN.shape(x)
 
       x =
@@ -70,9 +71,11 @@ defmodule Broca.Layers.Affine do
         else
           x
         end
+      s1 = System.os_time(:millisecond)
+      IO.puts("*** Affine reshape: #{s1 - s}msec")
 
       out = Broca.NN.dot(x, layer.params[:weight]) |> Broca.NN.add(layer.params[:bias])
-
+      IO.puts("** Affine forward: #{System.os_time(:millisecond) - s}msec")
       {activation, out} =
         if not is_nil(layer.activation) do
           Layer.forward(layer.activation, out)
@@ -104,9 +107,19 @@ defmodule Broca.Layers.Affine do
           {nil, dout}
         end
 
+      s = System.os_time(:millisecond)
+
       dx = Broca.NN.dot(dout, Broca.NN.transpose(layer.params[:weight]))
+      s1 = System.os_time(:millisecond)
+      IO.puts("*** Affine dx: #{s1 - s}msec")
+
       dw = Broca.NN.transpose(layer.x) |> Broca.NN.dot(dout)
+      s2 = System.os_time(:millisecond)
+      IO.puts("*** Affine dw: #{s2 - s1}msec")
+
       db = if is_list(hd(dout)), do: Broca.NN.sum(dout, :col), else: dout
+
+      IO.puts("** Affine backward: #{System.os_time(:millisecond) - s}msec")
 
       {%Broca.Layers.Affine{layer | grads: [weight: dw, bias: db], activation: activation},
        Broca.NN.reshape(dx, layer.x_shape)}

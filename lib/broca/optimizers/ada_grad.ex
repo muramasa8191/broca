@@ -11,9 +11,9 @@ defmodule Broca.Optimizers.AdaGrad do
           %Broca.Activations.Softmax{}])
       %Broca.Optimizers.AdaGrad{h: [[weight: [[0.0, 0.0], [0.0, 0.0]], bias: [0.0, 0.0]], [], [weight: [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], bias: [0.0, 0.0, 0.0]], []], init: true}
     """
-    def init(_, model) do
+    def init(_, layers) do
       h =
-        model
+        layers
         |> Enum.map(fn layer ->
           if Map.has_key?(layer, :params) do
             Keyword.keys(layer.params)

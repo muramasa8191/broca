@@ -26,8 +26,13 @@ defmodule Broca.Activations.ReLU do
         {%Broca.Activations.ReLU{mask: [true, false, false, true]}, [0.0, 2.0, 3.0, 0.0]}
     """
     def forward(_, x) do
+      s = System.os_time(:millisecond)
+
       mask = x |> Broca.NN.filter_mask(fn val -> val <= 0.0 end)
       out = Enum.zip(mask, x) |> Enum.map(fn {m, v} -> Broca.NN.mask(m, v, 0.0) end)
+
+      IO.puts("*** ReLU forward: #{System.os_time(:millisecond) - s}msec")
+
       {%Broca.Activations.ReLU{mask: mask}, out}
     end
 
@@ -42,9 +47,13 @@ defmodule Broca.Activations.ReLU do
         {%Broca.Activations.ReLU{mask: nil}, [[0.0, 20.0, 30.0, 0.0], [0.0, 20.0, 30.0, 0.0]]}
     """
     def backward(layer, dout) do
+      s = System.os_time(:millisecond)
+
       res =
         Enum.zip(layer.mask, dout)
         |> Enum.map(fn {m, v} -> Broca.NN.mask(m, v, 0.0) end)
+
+      IO.puts("*** ReLU backward: #{System.os_time(:millisecond) - s}msec")
 
       {%Broca.Activations.ReLU{}, res}
     end

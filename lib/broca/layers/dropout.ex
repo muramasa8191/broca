@@ -33,6 +33,7 @@ defmodule Broca.Layers.Dropout do
   defimpl Layer, for: Broca.Layers.Dropout do
     def forward(layer, input) do
       mask = Broca.Layers.Dropout.create_mask(Broca.NN.shape(input), layer.ratio)
+
       {%Broca.Layers.Dropout{layer | mask: mask}, Broca.NN.mask(mask, input, 0.0)}
     end
 

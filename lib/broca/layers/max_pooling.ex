@@ -61,6 +61,8 @@ defmodule Broca.Layers.MaxPooling do
          [[[[117, 126], [162, 171]], [[234, 252], [324, 342]]], [[[342, 351], [387, 396]], [[684, 702], [774, 792]]]]}
     """
     def forward(layer, input) do
+      # s = System.os_time(:millisecond)
+
       res =
         Broca.NN.matrix_filtering(
           input,
@@ -92,6 +94,8 @@ defmodule Broca.Layers.MaxPooling do
 
       [_, _, height, width] = Broca.NN.shape(input)
 
+      # IO.puts("** MaxPooling forward: #{System.os_time(:millisecond) - s}msec")
+
       {%Broca.Layers.MaxPooling{
          layer
          | mask: mask,
@@ -122,6 +126,8 @@ defmodule Broca.Layers.MaxPooling do
         else
           {nil, dout}
         end
+
+      # s = System.os_time(:millisecond)
 
       res =
         Enum.zip(layer.mask, dout)
@@ -158,6 +164,8 @@ defmodule Broca.Layers.MaxPooling do
             end
           end)
         end)
+
+      # IO.puts("** MaxPooling backward: #{System.os_time(:millisecond) - s}msec")
 
       {%Broca.Layers.MaxPooling{layer | activation: activation}, res}
     end
