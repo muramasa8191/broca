@@ -51,16 +51,12 @@ defmodule Broca.Trainer do
     |> Enum.unzip()
   end
 
-  defp print_start_log(train_data, nil) do
-    IO.puts("Train on #{length(elem(train_data, 0))} samples.")
+  defp print_start_log({_, t_train}, nil) do
+    IO.puts("Train on #{length(t_train)} samples.")
   end
 
-  defp print_start_log(train_data, test_data) do
-    IO.puts(
-      "Train on #{length(elem(train_data, 0))} samples, Validation on #{
-        length(elem(test_data, 0))
-      } samples."
-    )
+  defp print_start_log({_, t_train}, {_, t_test}) do
+    IO.puts("Train on #{length(t_train)} samples, Validation on #{length(t_test)} samples.")
   end
 
   defp print_report(train_result, progress, start_time, validation_result, is_last) do

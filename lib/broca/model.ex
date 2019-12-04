@@ -62,6 +62,7 @@ defmodule Broca.Models do
 
     def loss_and_accuracy(model, {x, t}, parallel \\ 1) do
       chunk_unit = div(length(x), parallel)
+
       Enum.zip(x, t)
       |> Stream.chunk_every(chunk_unit)
       |> Flow.from_enumerable(max_demand: 1, stages: 4)

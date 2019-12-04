@@ -71,11 +71,13 @@ defmodule Broca.Layers.Affine do
         else
           x
         end
+
       s1 = System.os_time(:millisecond)
       IO.puts("*** Affine reshape: #{s1 - s}msec")
 
       out = Broca.NN.dot(x, layer.params[:weight]) |> Broca.NN.add(layer.params[:bias])
       IO.puts("** Affine forward: #{System.os_time(:millisecond) - s}msec")
+
       {activation, out} =
         if not is_nil(layer.activation) do
           Layer.forward(layer.activation, out)

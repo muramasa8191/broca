@@ -156,16 +156,20 @@ defmodule Broca.NN do
 
   defp _concat(list1, list2, merge \\ true)
 
+  defp _concat(nil, list, _) do
+    list
+  end
+
   defp _concat(list, nil, _) do
     list
   end
 
-  defp _concat(list1, list2, true) when is_list(hd(list1)) do
+  defp _concat(list1, list2, true) when is_list(hd(list2)) do
     Enum.zip(list1, list2)
     |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, true) end)
   end
 
-  defp _concat(list1, list2, false) when is_list(hd(hd(list1))) do
+  defp _concat(list1, list2, false) when is_list(hd(hd(list2))) do
     Enum.zip(list1, list2)
     |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, false) end)
   end
@@ -792,10 +796,11 @@ defmodule Broca.NN do
 
   def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func, :merge)
       when is_3dlist(list) do
-    Enum.reduce(
-      list,
-      [],
-      &_concat(&2, _matrix_filtering(&1, filter_height, filter_width, stride, padding, map_func))
+    list
+    |> Enum.reverse
+    |> Enum.reduce(
+      nil,
+      &_concat(_matrix_filtering(&1, filter_height, filter_width, stride, padding, map_func), &2)
     )
   end
 
