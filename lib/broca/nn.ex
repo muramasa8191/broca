@@ -797,7 +797,7 @@ defmodule Broca.NN do
   def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func, :merge)
       when is_3dlist(list) do
     list
-    |> Enum.reverse
+    |> Enum.reverse()
     |> Enum.reduce(
       nil,
       &_concat(_matrix_filtering(&1, filter_height, filter_width, stride, padding, map_func), &2)
