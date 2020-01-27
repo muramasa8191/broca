@@ -150,65 +150,6 @@ ERL_NIF_TERM MakeDoubleNdList(ErlNifEnv *env, const double *src, const std::vect
 
 }  // namespace
 
-// static ERL_NIF_TERM conv2d_backward(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) {
-//   unsigned int length_dout, length_weight, length_shape;
-
-//   if (!enif_get_list_length(env, argv[0], &length_dout) ||
-//       !enif_get_list_length(env, argv[1], &length_weight) ||
-//       !enif_get_list_length(env, argv[2], &length_shape)) {
-//     return false;
-//   }
-
-//   std::vector<double> dout = GetDoubleVector(env, argv[0], length_dout);
-//   std::vector<double> weight = GetDoubleVector(env, argv[1], length_weight);
-//   const std::vector<int> dout_shape = GetIntVector(env, argv[2], length_shape);
-//   const std::vector<int> original_shape = GetIntVector(env, argv[3], length_shape);
-//   int filter_size = enif_get_int(argv[4]);
-//   int stride = enif_get_int(argv[5]);
-//   int padding = enif_get_int(argv[6]);
-
-//   unsigned int length =
-//       original_shape[0] * original_shape[1] * original_shape[2] * original_shape[3];
-
-//   const int batch_size = original_shape[0];
-//   const int channel_size = original_shape[1];
-//   const int height = original_shape[2];
-//   const int width = original_shape[3];
-
-//   const int filter_height = dout_shape[2];
-//   const int filter_width = dout_shape[3];
-//   const int step = static_cast<int>(std::ceil(filter_size * 1.0 / stride));
-//   std::vector<double> result(0.0, length);
-//   for (int b = 0; b < batch_size; ++b) {
-//     const size_t batch_base = b * (channel_size * height * width);
-//     const size_t dout_batch_base = b * (dout_shape[1] * filter_height * filter_width);
-//     for (int c = 0; c < channel_size; ++c) {
-//       const size_t channel_base = c * (height * width);
-//       for (int h = 0; h < height; ++h) {
-//         const size_t height_base = h * width;
-//         for (int w = 0; w < width; ++w) {
-//           const size_t index = batch_base + channel_base + height_base + w;
-//           for (int fh = 0; fh < filter_size; ++fh) {
-//             if ((padding + h - fh) < 0 || (padding + h + fh) % stride) continue;
-//             const int out_y = padding + (h * width);
-//             for (int fw = 0; fw < filter_size; ++fw) {
-//               if ((padding + w - fw) < 0 || (w + filter_size - padding)(w + fw) % stride)
-//               continue; for (int fc = 0; fc < dout_shape[1]; ++fc) {
-//                 const size_t weight_index =
-//                     (fc * dout_shape[1] * filter_size * filter_size) + (filter_size * fh) + fw;
-//                 result[index] += dout[dout_batch_base +
-//               }
-//             }
-//           }
-//         }
-//       }
-//     }
-//   }
-
-//   return MakeDoubleList(env, result, length);
-// }
-// g++ -fPIC -I/Users/tamura/.asdf/installs/erlang/21.3.8.6/erts-10.3.5.4/include -dynamiclib
-// -undefined dynamic_lookup -o priv/nn.so native/nif/nn.cpp
 static ERL_NIF_TERM nif_transpose2d(ErlNifEnv *env, int, const ERL_NIF_TERM argv[]) {
   std::vector<size_t> shape;
   double *src = GetDoubleMatrix(env, argv[0], shape);
