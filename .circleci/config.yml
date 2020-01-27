@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/elixir:1.9.1
+      - image: muramasa8191/elixir1.9.1with_openblas
         environment:
           MIX_ENV: test
     steps:
@@ -10,9 +10,6 @@ jobs:
       - run:
           name: Check format
           command: mix format --check-formatted
-      - run:
-          name: Install Hex
-          command: mix local.hex --force
       - run:
           name: Run deps.get
           command: mix deps.get

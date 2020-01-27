@@ -7,7 +7,8 @@ defmodule Broca.MixProject do
       version: "0.1.0",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      compilers: [:elixir_make] ++ Mix.compilers()
     ]
   end
 
@@ -25,7 +26,9 @@ defmodule Broca.MixProject do
       {:ex_doc, "~> 0.19", only: :dev},
       {:benchfella, "~> 0.3.0", only: :dev},
       {:flow, "~> 0.14.3"},
-      {:pelemay, git: "https://github.com/zeam-vm/pelemay.git"}
+      {:pelemay, git: "https://github.com/zeam-vm/pelemay.git"},
+      {:recon, "~> 2.5.0", only: :dev},
+      {:elixir_make, "~> 0.4", runtime: false}
     ]
   end
 end

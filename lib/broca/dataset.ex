@@ -1,148 +1,169 @@
-defmodule Broca.Dataset do
-  @moduledoc """
-  Module to manipulate datasets.
-  The sub modules are
-  - MNIST
+defmodule Broca.Dataset.MNIST do
+  @train_data "train-images-idx3-ubyte"
+  @train_label "train-labels-idx1-ubyte"
+  @test_data "t10k-images-idx3-ubyte"
+  @test_label "t10k-labels-idx1-ubyte"
 
-  @note no doctest due to too long execution time
-  """
-  defmodule MNIST do
-    @train_data "train-images-idx3-ubyte"
-    @train_label "train-labels-idx1-ubyte"
-    @test_data "t10k-images-idx3-ubyte"
-    @test_label "t10k-labels-idx1-ubyte"
+  alias Broca.Nif.NN
 
-    def load_train_data(normalize \\ true, is_one_hot \\ true, flatten \\ false) do
-      {parse_data(
-         File.read!(Application.app_dir(:broca, "priv/" <> @train_data)),
-         normalize,
-         flatten
-       ),
-       parse_label(File.read!(Application.app_dir(:broca, "priv/" <> @train_label)), is_one_hot)}
+  def load_train_data(normalize \\ true, is_one_hot \\ true, flatten \\ false) do
+    {parse_data(
+       File.read!(Application.app_dir(:broca, "priv/" <> @train_data)),
+       normalize,
+       flatten
+     ), parse_label(File.read!(Application.app_dir(:broca, "priv/" <> @train_label)), is_one_hot)}
+  end
+
+  def load_test_data(normalize \\ true, is_one_hot \\ true, flatten \\ false) do
+    {parse_data(
+       File.read!(Application.app_dir(:broca, "priv/" <> @test_data)),
+       normalize,
+       flatten
+     ), parse_label(File.read!(Application.app_dir(:broca, "priv/" <> @test_label)), is_one_hot)}
+  end
+
+  defp parse_data(raw, normalize, flatten) do
+    <<_::unsigned-32, size::unsigned-32, rows::unsigned-32, cols::unsigned-32, bin::binary>> = raw
+
+    image_size = rows * cols
+
+    if flatten do
+      retrieve_flat_data(bin, size, image_size, normalize)
+    else
+      retrieve_data(bin, size, rows, cols, normalize)
     end
+  end
 
-    def load_test_data(normalize \\ true, is_one_hot \\ true, flatten \\ false) do
-      {parse_data(
-         File.read!(Application.app_dir(:broca, "priv/" <> @test_data)),
-         normalize,
-         flatten
-       ),
-       parse_label(File.read!(Application.app_dir(:broca, "priv/" <> @test_label)), is_one_hot)}
-    end
+  defp retrieve_flat_data(bin, data_size, image_size, normalize) do
+    {data, _} =
+      1..data_size
+      |> Enum.reduce(
+        {[], bin},
+        fn _, {acc, rest} ->
+          <<image::binary-size(image_size), rest::binary>> = rest
 
-    defp parse_data(raw, normalize, flatten) do
-      <<_::unsigned-32, size::unsigned-32, rows::unsigned-32, cols::unsigned-32, bin::binary>> =
-        raw
-
-      image_size = rows * cols
-
-      if flatten do
-        retrieve_flat_data(bin, size, image_size, normalize)
-      else
-        retrieve_data(bin, size, rows, cols, normalize)
-      end
-    end
-
-    defp retrieve_flat_data(bin, data_size, image_size, normalize) do
-      {data, _} =
-        1..data_size
-        |> Enum.reduce(
-          {[], bin},
-          fn _, {acc, rest} ->
-            <<image::binary-size(image_size), rest::binary>> = rest
-
-            if normalize do
-              {[:erlang.binary_to_list(image) |> Enum.map(&(&1 / 255.0))] ++ acc, rest}
-            else
-              {[:erlang.binary_to_list(image)] ++ acc, rest}
-            end
+          if normalize do
+            {[:erlang.binary_to_list(image) |> Enum.map(&(&1 / 255.0))] ++ acc, rest}
+          else
+            {[:erlang.binary_to_list(image)] ++ acc, rest}
           end
-        )
+        end
+      )
 
-      data
+    data
+  end
+
+  defp normalize_data(img_binary, normalize) do
+    if normalize do
+      Enum.map(:erlang.binary_to_list(img_binary), &(&1 / 255.0))
+    else
+      :erlang.binary_to_list(img_binary)
     end
+  end
 
-    defp normalize_data(img_binary, normalize) do
-      if normalize do
-        Enum.map(:erlang.binary_to_list(img_binary), &(&1 / 255.0))
-      else
-        :erlang.binary_to_list(img_binary)
-      end
+  defp retrieve_data(bin, data_size, rows, cols, normalize) do
+    {data, _} =
+      1..data_size
+      |> Enum.reduce(
+        {[], bin},
+        fn _, {acc, rest} ->
+          {image, rest} =
+            1..rows
+            |> Enum.reduce({[], rest}, fn _, {list, raws} ->
+              <<img::binary-size(cols), raws::binary>> = raws
+
+              {[normalize_data(img, normalize)] ++ list, raws}
+            end)
+
+          {[[Enum.reverse(image)]] ++ acc, rest}
+        end
+      )
+
+    data
+  end
+
+  defp convert_one_hot(bin_label, is_one_hot) do
+    if is_one_hot do
+      :erlang.binary_to_list(bin_label) |> Enum.map(&NN.one_hot(&1, 9)) |> Enum.reverse()
+    else
+      :erlang.binary_to_list(bin_label) |> Enum.reverse()
     end
+  end
 
-    defp retrieve_data(bin, data_size, rows, cols, normalize) do
-      {data, _} =
-        1..data_size
-        |> Enum.reduce(
-          {[], bin},
-          fn _, {acc, rest} ->
-            {image, rest} =
-              1..rows
-              |> Enum.reduce({[], rest}, fn _, {list, raws} ->
-                <<img::binary-size(cols), raws::binary>> = raws
+  defp parse_label(labels, is_one_hot) do
+    <<_::unsigned-32, _::unsigned-32, bin::binary>> = labels
 
-                {[normalize_data(img, normalize)] ++ list, raws}
-              end)
-
-            {[[Enum.reverse(image)]] ++ acc, rest}
-          end
-        )
-
-      data
-    end
-
-    defp convert_one_hot(bin_label, is_one_hot) do
-      if is_one_hot do
-        :erlang.binary_to_list(bin_label) |> Enum.map(&Broca.NN.one_hot(&1, 9)) |> Enum.reverse()
-      else
-        :erlang.binary_to_list(bin_label) |> Enum.reverse()
-      end
-    end
-
-    defp parse_label(labels, is_one_hot) do
-      <<_::unsigned-32, _::unsigned-32, bin::binary>> = labels
-
-      convert_one_hot(bin, is_one_hot)
-    end
+    convert_one_hot(bin, is_one_hot)
   end
 end
 
 defmodule Broca.Dataset.CIFAR10 do
+  alias Broca.{
+    Dataset.CIFAR10,
+    Naive.NN
+  }
+
+  require Logger
+
   @train_data "cifar10/data_batch_?.bin"
   @test_data "cifar10/test_batch.bin"
 
+  def load_batch_data(batch_size) do
+    n = 1..5 |> Enum.shuffle() |> Enum.take(1)
+    batch = 0..9999 |> Enum.shuffle() |> Enum.take(batch_size) |> Enum.sort()
+
+    task =
+      Task.async(CIFAR10, :parse_batch, [
+        File.read!(
+          Application.app_dir(
+            :broca,
+            "priv/" <> String.replace(@train_data, "?", Integer.to_string(hd(n)))
+          )
+        ),
+        batch
+      ])
+
+    Enum.unzip(Task.await(task, :infinity))
+  end
+
   def load_train_data(normalize \\ true, is_one_hot \\ true) do
+    Logger.debug("load CIFAR10 train data")
+
     5..1
     |> Enum.reduce(
       [],
       fn idx, list ->
-        # [
-        # ]
-        parse(
-          File.read!(
-            Application.app_dir(
-              :broca,
-              "priv/" <> String.replace(@train_data, "?", Integer.to_string(idx))
-            )
-          ),
-          10000,
-          normalize,
-          is_one_hot
-        ) ++
-          list
+        task =
+          Task.async(CIFAR10, :parse, [
+            File.read!(
+              Application.app_dir(
+                :broca,
+                "priv/" <> String.replace(@train_data, "?", Integer.to_string(idx))
+              )
+            ),
+            10000,
+            normalize,
+            is_one_hot
+          ])
+
+        Task.await(task, :infinity) ++ list
       end
     )
     |> Enum.unzip()
   end
 
   def load_test_data(normalize \\ true, is_one_hot \\ true) do
-    parse(
-      File.read!(Application.app_dir(:broca, "priv/" <> @test_data)),
-      1000,
-      normalize,
-      is_one_hot
-    )
-    |> Enum.unzip()
+    Logger.debug("load CIFAR10 test data")
+
+    task =
+      Task.async(CIFAR10, :parse, [
+        File.read!(Application.app_dir(:broca, "priv/" <> @test_data)),
+        1000,
+        normalize,
+        is_one_hot
+      ])
+
+    Enum.unzip(Task.await(task, :infinity))
   end
 
   defp color_normalize(color, normalize) do
@@ -153,7 +174,32 @@ defmodule Broca.Dataset.CIFAR10 do
     end
   end
 
-  defp parse(raw, size, normalize, is_one_hot) do
+  def parse_batch(raw, batch_indices) do
+    batch_indices
+    |> Enum.reduce(
+      {[], raw, -1},
+      fn idx, {acc, bin, prev} ->
+        diff = if prev != -1, do: (idx - prev - 1) * 3073, else: (idx - 0) * 3073
+
+        <<_::binary-size(diff), class::unsigned-8, red::binary-size(1024),
+          green::binary-size(1024), blue::binary-size(1024), rest::binary>> = bin
+
+        red = color_normalize(red, true)
+        green = color_normalize(green, true)
+        blue = color_normalize(blue, true)
+
+        {[
+           {
+             [red, green, blue],
+             NN.one_hot(class, 9)
+           }
+         ] ++ acc, rest, idx}
+      end
+    )
+    |> elem(0)
+  end
+
+  def parse(raw, size, normalize, is_one_hot) do
     1..size
     |> Enum.reduce(
       {[], raw},
@@ -168,35 +214,9 @@ defmodule Broca.Dataset.CIFAR10 do
         {[
            {
              [red, green, blue],
-             if(is_one_hot, do: Broca.NN.one_hot(class, 9), else: class)
+             if(is_one_hot, do: NN.one_hot(class, 9), else: class)
            }
          ] ++ acc, rest}
-
-        # rgb =
-        #   Enum.zip(:erlang.binary_to_list(red), :erlang.binary_to_list(green))
-        #   |> Enum.zip(:erlang.binary_to_list(blue))
-
-        # {image, _} =
-        #   1..32
-        #   |> Enum.reduce({[], rgb},
-        #     fn _, {row, rgb_row} ->
-        #       {col_res, rest_rgb} =
-        #         1..32
-        #         |> Enum.reduce({[], rgb_row},
-        #           fn _, {col, rgb_col} ->
-        #             {{r, g}, b} = hd rgb_col
-        #             if normalize == True do
-        #               {[[r / 255, g / 255, b / 255]] ++ col, (tl rgb_col)}
-        #             else
-        #               {[[r, g, b]] ++ col, (tl rgb_col)}
-        #             end
-        #           end)
-        #       {[Enum.reverse(col_res)] ++ row, rest_rgb}
-        #   end)
-        # {
-        #   [{Enum.reverse(image), (if is_one_hot == True, do: Broca.NN.one_hot(class, 9), else: class)}] ++ acc,
-        #   rest
-        # }
       end
     )
     |> elem(0)

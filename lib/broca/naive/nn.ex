@@ -1,19 +1,27 @@
-defmodule Broca.NN do
+defmodule Broca.Naive.NN do
   @moduledoc """
   Module to handle `list` and `list of lists` for Neural Network.
   """
+
+  defguard is_2dlist(list) when is_list(hd(list)) and not is_list(hd(hd(list)))
+  defguard is_3dlist(list) when is_list(hd(hd(list))) and not is_list(hd(hd(hd(list))))
+  defguard is_4dlist(list) when is_list(hd(hd(hd(list))))
+
+  def new(list) do
+    list
+  end
 
   @doc """
   Add `list2` to `list1` 
 
   ## Examples
-      iex> Broca.NN.add([1, 2, 3], [4, 5, 6])
+      iex> Broca.Naive.NN.add([1, 2, 3], [4, 5, 6])
       [5, 7, 9]
 
-      iex> Broca.NN.add([[1, 2], [3, 4]], [5, 6])
+      iex> Broca.Naive.NN.add([[1, 2], [3, 4]], [5, 6])
       [[6, 8], [8, 10]]
 
-      iex> Broca.NN.add([[1, 2], [3, 4]], [[5, 6], [7, 8]])
+      iex> Broca.Naive.NN.add([[1, 2], [3, 4]], [[5, 6], [7, 8]])
       [[6, 8], [10, 12]]
   """
   @spec add([[number]], [[number]]) :: [[number]]
@@ -37,22 +45,22 @@ defmodule Broca.NN do
   Subtract `arg2` from `arg1`
 
   ## Examples
-      iex> Broca.NN.subtract(10, 7)
+      iex> Broca.Naive.NN.subtract(10, 7)
       3
 
-      iex> Broca.NN.subtract([1, 2, 3], 1)
+      iex> Broca.Naive.NN.subtract([1, 2, 3], 1)
       [0, 1, 2]
 
-      iex> Broca.NN.subtract(1, [1, 2, 3])
+      iex> Broca.Naive.NN.subtract(1, [1, 2, 3])
       [0, -1, -2]
 
-      iex> Broca.NN.subtract([3, 4, 5], [1, 2, 3])
+      iex> Broca.Naive.NN.subtract([3, 4, 5], [1, 2, 3])
       [2, 2, 2]
 
-      iex> Broca.NN.subtract([[1, 2, 3], [11, 12, 13]], [1, 2, 1])
+      iex> Broca.Naive.NN.subtract([[1, 2, 3], [11, 12, 13]], [1, 2, 1])
       [[0, 0, 2], [10, 10, 12]]
 
-      iex> Broca.NN.subtract([[99, 98], [97, 96]], [[1, 2], [3, 4]])
+      iex> Broca.Naive.NN.subtract([[99, 98], [97, 96]], [[1, 2], [3, 4]])
       [[98, 96], [94, 92]]
   """
   def subtract(list1, list2) when is_list(hd(list1)) and is_list(hd(list2)) do
@@ -88,13 +96,13 @@ defmodule Broca.NN do
   Vector multiplication
 
   ## Examples
-      iex> Broca.NN.mult([1, 2, 3], [4, 5, 6])
+      iex> Broca.Naive.NN.mult([1, 2, 3], [4, 5, 6])
       [4, 10, 18]
 
-      iex> Broca.NN.mult([[1, 2, 3], [1, 2, 3]], [[4, 5, 6], [4, 5, 6]])
+      iex> Broca.Naive.NN.mult([[1, 2, 3], [1, 2, 3]], [[4, 5, 6], [4, 5, 6]])
       [[4, 10, 18], [4, 10, 18]]
 
-      iex> Broca.NN.mult(10, 20)
+      iex> Broca.Naive.NN.mult(10, 20)
       200
   """
   def mult(list1, list2) when is_list(hd(list1)) and is_list(hd(list2)) do
@@ -130,10 +138,10 @@ defmodule Broca.NN do
   Division x divided by y.
 
   ## Examples
-      iex> Broca.NN.division([1, 2, 3], 2)
+      iex> Broca.Naive.NN.division([1, 2, 3], 2)
       [0.5, 1.0, 1.5]
 
-      iex> Broca.NN.division([[1, 2, 3], [1, 2, 3]], 2)
+      iex> Broca.Naive.NN.division([[1, 2, 3], [1, 2, 3]], 2)
       [[0.5, 1.0, 1.5], [0.5, 1.0, 1.5]]
   """
   def division(list1, list2) when is_list(list1) and is_list(list2) do
@@ -150,31 +158,27 @@ defmodule Broca.NN do
     x / y
   end
 
-  defguard is_2dlist(list) when is_list(hd(list)) and not is_list(hd(hd(list)))
-  defguard is_3dlist(list) when is_list(hd(hd(list))) and not is_list(hd(hd(hd(list))))
-  defguard is_4dlist(list) when is_list(hd(hd(hd(list))))
+  defp concat(list1, list2, merge \\ true)
 
-  defp _concat(list1, list2, merge \\ true)
-
-  defp _concat(nil, list, _) do
+  defp concat(nil, list, _) do
     list
   end
 
-  defp _concat(list, nil, _) do
+  defp concat(list, nil, _) do
     list
   end
 
-  defp _concat(list1, list2, true) when is_list(hd(list2)) do
+  defp concat(list1, list2, true) when is_list(hd(list2)) do
     Enum.zip(list1, list2)
-    |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, true) end)
+    |> Enum.map(fn {sub_list1, sub_list2} -> concat(sub_list1, sub_list2, true) end)
   end
 
-  defp _concat(list1, list2, false) when is_list(hd(hd(list2))) do
+  defp concat(list1, list2, false) when is_list(hd(hd(list2))) do
     Enum.zip(list1, list2)
-    |> Enum.map(fn {sub_list1, sub_list2} -> _concat(sub_list1, sub_list2, false) end)
+    |> Enum.map(fn {sub_list1, sub_list2} -> concat(sub_list1, sub_list2, false) end)
   end
 
-  defp _concat(list1, list2, _) do
+  defp concat(list1, list2, _) do
     Enum.concat(list1, list2)
   end
 
@@ -182,15 +186,15 @@ defmodule Broca.NN do
   Transpose the 4d `list` given
 
   ## Examples
-      iex> Broca.NN.transpose([1, 2, 3])
+      iex> Broca.Naive.NN.transpose([1, 2, 3])
       [[1], [2], [3]]
 
-      iex> Broca.NN.transpose([[1, 2, 3], [4, 5, 6]])
+      iex> Broca.Naive.NN.transpose([[1, 2, 3], [4, 5, 6]])
       [[1, 4], [2, 5], [3, 6]]
 
       iex> list = [[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]], \
       [[26, 27, 28, 29, 30], [31, 32, 33, 34, 35], [36, 37, 38, 39, 40], [41, 42, 43, 44, 45], [46, 47, 48, 49, 50]]]
-      iex> Broca.NN.transpose(list)
+      iex> Broca.Naive.NN.transpose(list)
       [[[1, 26], [6, 31], [11, 36], [16, 41], [21, 46]],
        [[2, 27], [7, 32], [12, 37], [17, 42], [22, 47]],
        [[3, 28], [8, 33], [13, 38], [18, 43], [23, 48]],
@@ -199,7 +203,7 @@ defmodule Broca.NN do
 
       iex> list = [[[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]], [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]], \
       [[[25 , 26, 27, 28], [29, 30, 31, 32], [33, 34, 35, 36]], [[37, 38, 39, 40], [41, 42, 43, 44], [45, 46, 47 , 48]]]]
-      iex> Broca.NN.transpose(list)
+      iex> Broca.Naive.NN.transpose(list)
       [[[[1, 25], [13, 37]], [[5, 29], [17, 41]], [[9, 33], [21, 45]]],
       [[[2, 26], [14, 38]], [[6, 30], [18, 42]], [[10, 34], [22, 46]]],
       [[[3, 27], [15, 39]], [[7, 31], [19, 43]], [[11, 35], [23, 47]]],
@@ -221,12 +225,12 @@ defmodule Broca.NN do
       end)
       |> Enum.reduce(
         nil,
-        fn channel, acc -> _concat(channel, acc, false) end
+        fn channel, acc -> concat(channel, acc, false) end
       )
     end)
     |> Enum.reduce(
       nil,
-      fn channel, acc -> _concat(channel, acc) end
+      fn channel, acc -> concat(channel, acc) end
     )
   end
 
@@ -243,7 +247,7 @@ defmodule Broca.NN do
     end)
     |> Enum.reduce(
       nil,
-      fn batch, acc -> _concat(batch, acc) end
+      fn batch, acc -> concat(batch, acc) end
     )
   end
 
@@ -268,11 +272,37 @@ defmodule Broca.NN do
   ## Examples
       iex> list = [[[[63, 126], [72, 144], [81, 162]], [[108, 216], [117, 234], [126, 252]], [[153, 306], [162, 324], [171, 342]]], \
       [[[288, 576], [297, 594], [306, 612]], [[333, 666], [342, 684], [351, 702]], [[378, 756], [387, 774], [396, 792]]]]
-      iex> Broca.NN.transpose(list, 0, 3, 1, 2)
+      iex> Broca.Naive.NN.transpose(list, 0, 3, 1, 2)
       [[[[63, 72, 81], [108, 117, 126], [153, 162, 171]], [[126, 144, 162], [216, 234, 252], [306, 324, 342]]],\
        [[[288, 297, 306], [333, 342, 351], [378, 387, 396]], [[576, 594, 612], [666, 684, 702], [756, 774, 792]]]]
 
+      iex> list = [[[[0.0,  1.0], [2.0,  3.0], [4.0,  5.0]], [[6.0,  7.0], [8.0,  9.0], [10.0, 11.0]], [[12.0, 13.0], [14.0, 15.0], [16.0, 17.0]]], \
+      [[[18.0, 19.0], [20.0, 21.0], [22.0, 23.0]], [[24.0, 25.0], [26.0, 27.0], [28.0, 29.0]], [[30.0, 31.0], [32.0, 33.0], [34.0, 35.0]]], \
+      [[[36.0, 37.0], [38.0, 39.0], [40.0, 41.0]], [[42.0, 43.0], [44.0, 45.0], [46.0, 47.0]], [[48.0, 49.0], [50.0, 51.0], [52.0, 53.0]]]]
+      iex> Broca.Naive.NN.transpose(list, 0, 2, 3, 1)
+      [[[[0.0,  6.0, 12.0], [1.0,  7.0, 13.0]], [[2.0,  8.0, 14.0], [3.0,  9.0, 15.0]], [[4.0, 10.0, 16.0], [5.0, 11.0, 17.0]]], 
+      [[[18.0, 24.0, 30.0], [19.0, 25.0, 31.0]], [[20.0, 26.0, 32.0], [21.0, 27.0, 33.0]], [[22.0, 28.0, 34.0], [23.0, 29.0, 35.0]]], 
+      [[[36.0, 42.0, 48.0], [37.0, 43.0, 49.0]], [[38.0, 44.0, 50.0], [39.0, 45.0, 51.0]], [[40.0, 46.0, 52.0], [41.0, 47.0, 53.0]]]]
   """
+  def transpose(list, 0, 2, 3, 1) do
+    Enum.map(
+      list,
+      fn channel ->
+        arr = List.duplicate([], length(hd(channel)))
+
+        transpose(channel)
+        |> Enum.reverse()
+        |> Enum.reduce(
+          arr,
+          fn row, acc ->
+            Enum.zip(row, acc)
+            |> Enum.map(&([elem(&1, 0)] ++ elem(&1, 1)))
+          end
+        )
+      end
+    )
+  end
+
   def transpose(list, 0, 3, 1, 2) do
     list
     |> Enum.map(&transpose(&1, 2, 0, 1))
@@ -295,19 +325,19 @@ defmodule Broca.NN do
 
   ## Examples
       iex> list = [1, 2, 3, 4]
-      iex> Broca.NN.reshape(list, [2, 2])
+      iex> Broca.Naive.NN.reshape(list, [2, 2])
       [[1, 2], [3, 4]]
 
       iex> list = [1, 2, 3, 4, 5, 6]
-      iex> Broca.NN.reshape(list, [3, 2])
+      iex> Broca.Naive.NN.reshape(list, [3, 2])
       [[1, 2], [3, 4], [5, 6]]
 
       iex> list = [1, 2, 3, 4, 5, 6, 7, 8]
-      iex> Broca.NN.reshape(list, [2, 2, 2])
+      iex> Broca.Naive.NN.reshape(list, [2, 2, 2])
       [[[1, 2], [3, 4]],[[5, 6], [7, 8]]]
 
       iex> list = [[[[[1, 2], [3, 4]], [[5, 6], [7, 8]]]], [[[[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]]]
-      iex> Broca.NN.reshape(list, [2, 2, 2, 2])
+      iex> Broca.Naive.NN.reshape(list, [2, 2, 2, 2])
       [[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]
   """
   def reshape(list, dims) do
@@ -319,28 +349,41 @@ defmodule Broca.NN do
     |> hd
   end
 
+  def dot_and_add(list, list_dot, list_add) do
+    Broca.Naive.NN.dot(list, list_dot)
+    |> Broca.Naive.NN.add(list_add)
+  end
+
+  def dot_nt(list1, list2) do
+    dot(list1, transpose(list2))
+  end
+
+  def dot_tn(list1, list2) do
+    dot(transpose(list1), list2)
+  end
+
   @doc """
   Dot product
 
   ## Examples
       iex> a = [1, 2, 3]
       iex> b = [4, 5, 6]
-      iex> Broca.NN.dot(a, b)
+      iex> Broca.Naive.NN.dot(a, b)
       32
 
       iex> a = [[1, 2], [3, 4], [5, 6]]
       iex> b = [7, 8]
-      iex> Broca.NN.dot(a, b)
+      iex> Broca.Naive.NN.dot(a, b)
       [23, 53, 83]
 
       iex> a = [[1, 2], [3, 4]]
       iex> b = [[5, 6], [7, 8]]
-      iex> Broca.NN.dot(a, b)
+      iex> Broca.Naive.NN.dot(a, b)
       [[19, 22], [43, 50]]
 
       iex> a = [1, 2]
       iex> b = [[1, 3, 5], [2, 4, 6]]
-      iex> Broca.NN.dot(a, b)
+      iex> Broca.Naive.NN.dot(a, b)
       [5, 11, 17]
   """
   @spec dot([[number]], [[number]]) :: [[number]]
@@ -381,13 +424,13 @@ defmodule Broca.NN do
   Sum the `list`
 
   ## Examples
-      iex> Broca.NN.sum([1, 2, 3])
+      iex> Broca.Naive.NN.sum([1, 2, 3])
       6
 
-      iex> Broca.NN.sum([[1, 2, 3], [4, 5, 6]], :row)
+      iex> Broca.Naive.NN.sum([[1, 2, 3], [4, 5, 6]], :row)
       [6, 15]
 
-      iex> Broca.NN.sum([[1, 2, 3], [4, 5, 6], [7, 8, 9]], :col)
+      iex> Broca.Naive.NN.sum([[1, 2, 3], [4, 5, 6], [7, 8, 9]], :col)
       [12, 15, 18]
   """
   def sum(list) do
@@ -416,10 +459,10 @@ defmodule Broca.NN do
   Sigmoid function
 
   ## Examples
-      iex> Broca.NN.sigmoid([-1.0, 1.0, 2.0])
+      iex> Broca.Naive.NN.sigmoid([-1.0, 1.0, 2.0])
       [0.2689414213699951, 0.7310585786300049, 0.8807970779778823]
 
-      iex> Broca.NN.sigmoid([[-1.0, 1.0, 2.0], [-1.0, 1.0, 2.0]])
+      iex> Broca.Naive.NN.sigmoid([[-1.0, 1.0, 2.0], [-1.0, 1.0, 2.0]])
       [[0.2689414213699951, 0.7310585786300049, 0.8807970779778823],
        [0.2689414213699951, 0.7310585786300049, 0.8807970779778823]]
   """
@@ -437,10 +480,10 @@ defmodule Broca.NN do
   ReLU function
 
   ## Examples
-      iex> Broca.NN.relu([-1.0, 0.0, 1.0, 2.0])
+      iex> Broca.Naive.NN.relu([-1.0, 0.0, 1.0, 2.0])
       [0.0, 0.0, 1.0, 2.0]
 
-      iex> Broca.NN.relu([[-1.0, 0.0, 1.0, 2.0], [-1.0, 0.0, 1.0, 2.0]])
+      iex> Broca.Naive.NN.relu([[-1.0, 0.0, 1.0, 2.0], [-1.0, 0.0, 1.0, 2.0]])
       [[0.0, 0.0, 1.0, 2.0], [0.0, 0.0, 1.0, 2.0]]
   """
   @spec relu([[number]]) :: [[number]]
@@ -457,10 +500,10 @@ defmodule Broca.NN do
   Softmax function
 
   ## Examples
-      iex> Broca.NN.softmax([0.3, 2.9, 4.0])
+      iex> Broca.Naive.NN.softmax([0.3, 2.9, 4.0])
       [0.01821127329554753, 0.24519181293507392, 0.7365969137693786]
 
-      iex> Broca.NN.softmax([[0.3, 2.9, 4.0], [0.3, 2.9, 4.0], [0.3, 2.9, 4.0]])
+      iex> Broca.Naive.NN.softmax([[0.3, 2.9, 4.0], [0.3, 2.9, 4.0], [0.3, 2.9, 4.0]])
       [[0.01821127329554753, 0.24519181293507392, 0.7365969137693786],
        [0.01821127329554753, 0.24519181293507392, 0.7365969137693786],
        [0.01821127329554753, 0.24519181293507392, 0.7365969137693786]]
@@ -492,13 +535,13 @@ defmodule Broca.NN do
   Convert class list to one hot vector.
 
   ## Examples
-      iex> Broca.NN.one_hot(0, 4)
+      iex> Broca.Naive.NN.one_hot(0, 4)
       [1.0, 0.0, 0.0, 0.0, 0.0]
 
-      iex> Broca.NN.one_hot(3, 4)
+      iex> Broca.Naive.NN.one_hot(3, 4)
       [0.0, 0.0, 0.0, 1.0, 0.0]
 
-      iex> Broca.NN.one_hot([0, 1, 2, 3, 4], 4)
+      iex> Broca.Naive.NN.one_hot([0, 1, 2, 3, 4], 4)
       [[1.0, 0.0, 0.0, 0.0, 0.0],
        [0.0, 1.0, 0.0, 0.0, 0.0],
        [0.0, 0.0, 1.0, 0.0, 0.0],
@@ -519,18 +562,18 @@ defmodule Broca.NN do
   ## Examples
       iex> t = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
       iex> y = [0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]
-      iex> Broca.NN.cross_entropy_error(y, t)
+      iex> Broca.Naive.NN.cross_entropy_error(y, t)
       0.51082545709933802
     
       iex> t = [[0, 0, 1, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]]
       iex> y = [[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0],[0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0]]
-      iex> Broca.NN.cross_entropy_error(y, t)
+      iex> Broca.Naive.NN.cross_entropy_error(y, t)
       0.510825457099338
   """
   def cross_entropy_error(ys, ts) when is_list(hd(ys)) do
     Enum.zip(ys, ts)
     |> Enum.reduce(0, fn {y, t}, acc -> acc + cross_entropy_error(y, t) end)
-    |> Broca.NN.division(length(ys))
+    |> Broca.Naive.NN.division(length(ys))
   end
 
   def cross_entropy_error(ys, ts) do
@@ -544,13 +587,13 @@ defmodule Broca.NN do
   Get the index of maximum value in the list
 
   ## Examples
-      iex> Broca.NN.argmax([5.0, 1.0, 2.0, 3.0])
+      iex> Broca.Naive.NN.argmax([5.0, 1.0, 2.0, 3.0])
       0
 
-      iex> Broca.NN.argmax([1.0, 4.0, 2.0, 3.0])
+      iex> Broca.Naive.NN.argmax([1.0, 4.0, 2.0, 3.0])
       1
 
-      iex> Broca.NN.argmax([[5.0, 1.0, 2.0, 3.0], [1.0, 4.0, 2.0, 3.0]])
+      iex> Broca.Naive.NN.argmax([[5.0, 1.0, 2.0, 3.0], [1.0, 4.0, 2.0, 3.0]])
       [0, 1]
   """
   def argmax(list) when is_list(hd(list)) do
@@ -571,10 +614,10 @@ defmodule Broca.NN do
   Mask the list with the filter given
 
   ## Examples
-      iex> Broca.NN.filter_mask([-1.0, 0.2, 1.0, -0.3], fn x -> x <= 0 end)
+      iex> Broca.Naive.NN.filter_mask([-1.0, 0.2, 1.0, -0.3], fn x -> x <= 0 end)
       [true, false, false, true]
 
-      iex> Broca.NN.filter_mask([[-1.0, 0.2, 1.0, -0.3], [-1.0, 0.2, 1.0, -0.3]], fn x -> x <= 0 end)
+      iex> Broca.Naive.NN.filter_mask([[-1.0, 0.2, 1.0, -0.3], [-1.0, 0.2, 1.0, -0.3]], fn x -> x <= 0 end)
       [[true, false, false, true], [true, false, false, true]]
   """
   def filter_mask(list, filter) when is_list(hd(list)) do
@@ -591,13 +634,13 @@ defmodule Broca.NN do
   Mask the data. The `value` is replaced by the `replaced_value` if `filter` is `true`
 
   ## Examples
-      iex> Broca.NN.mask(true, 4.0)
+      iex> Broca.Naive.NN.mask(true, 4.0)
       0.0
 
-      iex> Broca.NN.mask(false, 4, 0)
+      iex> Broca.Naive.NN.mask(false, 4, 0)
       4
 
-      iex> Broca.NN.mask([true, false, true], [1, 2, 4], -1.0)
+      iex> Broca.Naive.NN.mask([true, false, true], [1, 2, 4], -1.0)
       [-1.0, 2, -1.0]
   """
   def mask(filter, values) do
@@ -621,16 +664,16 @@ defmodule Broca.NN do
   Generate zeros with following the structure of `list` given.
 
   ## Examples
-      iex> Broca.NN.zeros_like([])
+      iex> Broca.Naive.NN.zeros_like([])
       []
 
-      iex> Broca.NN.zeros_like([[1], []])
+      iex> Broca.Naive.NN.zeros_like([[1], []])
       [[0.0], []]
 
-      iex> Broca.NN.zeros_like([1, 2, 3])
+      iex> Broca.Naive.NN.zeros_like([1, 2, 3])
       [0.0, 0.0, 0.0]
 
-      iex> Broca.NN.zeros_like([[1, 2], [3, 4, 5]])
+      iex> Broca.Naive.NN.zeros_like([[1, 2], [3, 4, 5]])
       [[0.0, 0.0], [0.0, 0.0, 0.0]]
   """
   def zeros_like([]) do
@@ -649,10 +692,10 @@ defmodule Broca.NN do
   Get the list of lengthes
 
   ## Examples
-      iex> Broca.NN.shape([1, 2, 3])
+      iex> Broca.Naive.NN.shape([1, 2, 3])
       [3]
 
-      iex> Broca.NN.shape([[1, 2], [3, 4], [5, 6]])
+      iex> Broca.Naive.NN.shape([[1, 2], [3, 4], [5, 6]])
       [3, 2]
   """
   def shape(list) do
@@ -668,10 +711,22 @@ defmodule Broca.NN do
   end
 
   @doc """
+  The shape of the list
+  This expects the list of the lists at same sizes
+
+  ## Examples
+      iex> Broca.Naive.NN.data_size([[[1, 1, 1]], [[1, 1, 1]]])
+      6
+  """
+  def data_size(list) do
+    Enum.reduce(shape(list), 1, &(&1 * &2))
+  end
+
+  @doc """
   Create Shape string
 
   ## Examples
-      iex> Broca.NN.shape_string([[1, 2], [2, 2]])
+      iex> Broca.Naive.NN.shape_string([[1, 2], [2, 2]])
       "[2, 2]"
   """
   def shape_string([]) do
@@ -701,20 +756,20 @@ defmodule Broca.NN do
 
   ## Examples
       iex> a = [1..10 |> Enum.to_list |> Enum.map(&(&1 / 1.0))]
-      iex> Broca.NN.pad(a, 1)
+      iex> Broca.Naive.NN.pad(a, 1)
       [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
        [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 0.0],
        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
 
       iex> a = [1..10 |> Enum.to_list |> Enum.map(&(&1 / 1.0))]
-      iex> Broca.NN.pad(a, 2)
+      iex> Broca.Naive.NN.pad(a, 2)
       [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
        [0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 0.0, 0.0],
        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
 
-      iex> Broca.NN.pad([[1, 2, 3], [4, 5, 6], [7, 8, 9]], 1)
+      iex> Broca.Naive.NN.pad([[1, 2, 3], [4, 5, 6], [7, 8, 9]], 1)
       [[0.0, 0.0, 0.0, 0.0, 0.0],[0.0, 1, 2, 3, 0.0],[0.0, 4, 5, 6, 0.0],[0.0, 7, 8, 9, 0.0],[0.0, 0.0, 0.0, 0.0, 0.0]]
   """
   def pad(list, pad_count) when is_list(hd(list)) do
@@ -736,24 +791,24 @@ defmodule Broca.NN do
 
   ## Examples
       iex> list = [[[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]]]
-      iex>  Broca.NN.matrix_filtering(list, 3, 3)
+      iex>  Broca.Naive.NN.matrix_filtering(list, 3, 3)
       [[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [2, 3, 4, 7, 8, 9, 12, 13, 14], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
        [[6, 7, 8, 11, 12, 13, 16, 17, 18], [7, 8, 9, 12, 13, 14, 17, 18, 19], [8, 9, 10, 13, 14, 15, 18, 19, 20]],
        [[11, 12, 13, 16, 17, 18, 21, 22, 23], [12, 13, 14, 17, 18, 19, 22, 23, 24], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]]
 
       iex> list = [[[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]]]
-      iex>  Broca.NN.matrix_filtering(list, 3, 3, 2)
+      iex>  Broca.Naive.NN.matrix_filtering(list, 3, 3, 2)
       [[[[1, 2, 3, 6, 7, 8, 11, 12, 13], [3, 4, 5, 8, 9, 10, 13, 14, 15]],
        [[11, 12, 13, 16, 17, 18, 21, 22, 23], [13, 14, 15, 18, 19, 20, 23, 24, 25]]]]
 
       iex> list = [[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]
-      iex>  Broca.NN.matrix_filtering(list, 3, 3, 1, 1)
+      iex>  Broca.Naive.NN.matrix_filtering(list, 3, 3, 1, 1)
       [[[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]],
        [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
        [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]]]
 
       iex> list = [[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]], [[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]
-      iex>  Broca.NN.matrix_filtering(list, 3, 3, 1, 1)
+      iex>  Broca.Naive.NN.matrix_filtering(list, 3, 3, 1, 1)
       [[[[0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 4.0, 5.0], [0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [0.0, 0.0, 0.0, 2.0, 3.0, 0.0, 5.0, 6.0, 0.0]],
        [[0.0, 1.0, 2.0, 0.0, 4.0, 5.0, 0.0, 7.0, 8.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], [2.0, 3.0, 0.0, 5.0, 6.0, 0.0, 8.0, 9.0, 0.0]],
        [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]],
@@ -762,14 +817,14 @@ defmodule Broca.NN do
        [[0.0, 4.0, 5.0, 0.0, 7.0, 8.0, 0.0, 0.0, 0.0], [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0, 0.0, 0.0], [5.0, 6.0, 0.0, 8.0, 9.0, 0.0, 0.0, 0.0, 0.0]]]]
 
       iex> list = [[[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 25]]]]
-      iex> Broca.NN.matrix_filtering(list, 3, 3, 1, 0, fn l -> Enum.max(l) end)
+      iex> Broca.Naive.NN.matrix_filtering(list, 3, 3, 1, 0, fn l -> Enum.max(l) end)
       [[[13, 14, 15],
        [18, 19, 20],
        [23, 24, 25]]]
 
       iex> tensor = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]], [[10, 11, 12], [13, 14, 15], [16, 17, 18]], [[19, 20, 21], [22, 23, 24], [25, 26, 27]]], \
       [[[28, 29, 30], [31, 32, 33], [34, 35, 36]], [[37, 38, 39], [40, 41, 42], [43, 44, 45]], [[46, 47, 48], [49, 50, 51], [52, 53, 54]]]]
-      iex> Broca.NN.matrix_filtering(tensor, 2, 2, 1, 0, fn x -> x end)
+      iex> Broca.Naive.NN.matrix_filtering(tensor, 2, 2, 1, 0, fn x -> x end)
       [[[[1, 2, 4, 5, 10, 11, 13, 14, 19, 20, 22, 23], [2, 3, 5, 6, 11, 12, 14, 15, 20, 21, 23, 24]],
         [[4, 5, 7, 8, 13, 14, 16, 17, 22, 23, 25, 26], [5, 6, 8, 9, 14, 15, 17, 18, 23, 24, 26, 27]]],
        [[[28, 29, 31, 32, 37, 38, 40, 41, 46, 47, 49, 50], [29, 30, 32, 33, 38, 39, 41, 42, 47, 48, 50, 51]],
@@ -778,53 +833,56 @@ defmodule Broca.NN do
   """
   def matrix_filtering(
         list,
-        filter_height,
-        filter_width,
+        kernel_height,
+        kernel_width,
         stride \\ 1,
         padding \\ 0,
         map_func \\ fn list -> list end,
         type \\ :merge
       )
 
-  def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func, type)
+  def matrix_filtering(list, kernel_height, kernel_width, stride, padding, map_func, type)
       when is_4dlist(list) do
     Enum.map(
       list,
-      &matrix_filtering(&1, filter_height, filter_width, stride, padding, map_func, type)
+      &matrix_filtering(&1, kernel_height, kernel_width, stride, padding, map_func, type)
     )
   end
 
-  def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func, :merge)
+  def matrix_filtering(list, kernel_height, kernel_width, stride, padding, map_func, :merge)
       when is_3dlist(list) do
     list
     |> Enum.reverse()
     |> Enum.reduce(
       nil,
-      &_concat(_matrix_filtering(&1, filter_height, filter_width, stride, padding, map_func), &2)
+      &concat(
+        matrix_filtering_impl(&1, kernel_height, kernel_width, stride, padding, map_func),
+        &2
+      )
     )
   end
 
-  def matrix_filtering(list, filter_height, filter_width, stride, padding, map_func, _)
+  def matrix_filtering(list, kernel_height, kernel_width, stride, padding, map_func, _)
       when is_3dlist(list) do
     Enum.map(
       list,
-      &_matrix_filtering(&1, filter_height, filter_width, stride, padding, map_func)
+      &matrix_filtering_impl(&1, kernel_height, kernel_width, stride, padding, map_func)
     )
   end
 
-  defp _matrix_filtering(list, filter_height, filter_width, stride, padding, map_func) do
+  defp matrix_filtering_impl(list, kernel_height, kernel_width, stride, padding, map_func) do
     list = if padding == 0, do: list, else: pad(list, padding)
     org_h = length(list)
     org_w = length(hd(list))
-    out_h = div(org_h - filter_height, stride) + 1
-    out_w = div(org_w - filter_width, stride) + 1
+    out_h = div(org_h - kernel_height, stride) + 1
+    out_w = div(org_w - kernel_width, stride) + 1
 
     for y <- for(i <- 0..(out_h - 1), do: i * stride) |> Enum.filter(&(&1 < org_h)) do
       for x <- for(i <- 0..(out_w - 1), do: i * stride) |> Enum.filter(&(&1 < org_w)) do
         list
         |> Enum.drop(y)
-        |> Enum.take(filter_height)
-        |> Enum.map(&(Enum.drop(&1, x) |> Enum.take(filter_width)))
+        |> Enum.take(kernel_height)
+        |> Enum.map(&(Enum.drop(&1, x) |> Enum.take(kernel_width)))
         |> List.flatten()
         |> map_func.()
       end
