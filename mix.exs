@@ -1,6 +1,9 @@
 defmodule Broca.MixProject do
   use Mix.Project
 
+  @description """
+    Elixir Deep Learning Framework
+  """
   def project do
     [
       app: :broca,
@@ -8,6 +11,8 @@ defmodule Broca.MixProject do
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      description: @description,
+      package: package(),
       compilers: [:elixir_make] ++ Mix.compilers()
     ]
   end
@@ -27,8 +32,15 @@ defmodule Broca.MixProject do
       {:benchfella, "~> 0.3.0", only: :dev},
       {:flow, "~> 0.14.3"},
       {:pelemay, git: "https://github.com/zeam-vm/pelemay.git"},
-      {:recon, "~> 2.5.0", only: :dev},
       {:elixir_make, "~> 0.4", runtime: false}
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["masatam81"],
+      licenses: ["MIT"],
+      links: %{ "Github" => "https://github.com/muramasa8191/broca"}
     ]
   end
 end
