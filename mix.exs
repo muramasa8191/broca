@@ -40,7 +40,7 @@ defmodule Broca.MixProject do
     [
       maintainers: ["masatam81"],
       licenses: ["MIT"],
-      links: %{ "Github" => "https://github.com/muramasa8191/broca"}
+      links: %{"Github" => "https://github.com/muramasa8191/broca"}
     ]
   end
 end
